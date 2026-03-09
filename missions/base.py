@@ -36,7 +36,7 @@ class BaseMission(ABC):
 
     async def report_to_headquarter(self, report: dict | list[dict]) -> str:
         log.info("Reporting to headquarter")
-        headquarter = AIdevs4()
+        headquarter = AIdevs4(config=self.config)
 
         return await headquarter.verify(
             self.get_task_name(),
