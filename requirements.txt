@@ -3,4 +3,3 @@ instructor
 openai
 pydantic
 python-dotenv
-requests

@@ -138,5 +138,5 @@ class Mission01(BaseMission):
             }
             for p in transport
         ]
-        result = self.report_to_headquarter(report)
+        result = await self.report_to_headquarter(report)
         log.info("Headquarter response: %s", result)
