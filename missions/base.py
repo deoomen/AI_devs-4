@@ -25,6 +25,9 @@ class BaseMission(ABC):
         raise NotImplementedError
 
     def save_csv(self, path: Path, data: list[dict]) -> None:
+        if not data:
+            log.warning("save_csv called with empty data, skipping %s", path)
+            return
         with path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=data[0].keys())
             writer.writeheader()
