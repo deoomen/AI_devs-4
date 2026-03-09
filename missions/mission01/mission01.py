@@ -41,7 +41,7 @@ class Mission01(BaseMission):
             log.info("CSV already exists at %s, skipping download", dest)
             return dest
 
-        log.info("Downloading CSV from %s -> %s", url, dest)
+        log.info("Downloading CSV -> %s", dest)
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
