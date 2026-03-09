@@ -1,5 +1,6 @@
 httpx
-python-dotenv
-openai
 instructor
+openai
 pydantic
+python-dotenv
+requests
