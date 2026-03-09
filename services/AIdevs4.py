@@ -22,7 +22,7 @@ class AIdevs4:
         json = response.json()
 
         if json['code'] != 0:
-            raise RuntimeError('Something went wrong :( Content: %s', json)
+            raise RuntimeError(f"Something went wrong :( Content: {json}")
 
         return json
 
