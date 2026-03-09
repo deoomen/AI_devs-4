@@ -1,4 +1,5 @@
 import csv
+import httpx
 import logging
 from abc import ABC, abstractmethod
 from config import Config, load_config
@@ -23,6 +24,21 @@ class BaseMission(ABC):
     async def run(self) -> None:
         """Execute the mission."""
         raise NotImplementedError
+
+    async def download_csv(self, url: str, dest: Path) -> Path:
+        if dest.exists():
+            log.info("CSV already exists at %s, skipping download", dest)
+            return dest
+
+        log.info("Downloading CSV -> %s", dest)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            dest.write_bytes(response.content)
+
+        log.info("CSV saved (%d bytes)", dest.stat().st_size)
+        return dest
 
     def save_csv(self, path: Path, data: list[dict]) -> None:
         if not data:

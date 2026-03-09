@@ -1,5 +1,4 @@
 import csv
-import httpx
 import logging
 from missions.base import BaseMission
 from pathlib import Path
@@ -36,24 +35,6 @@ class Mission01(BaseMission):
 
     def get_task_name(self) -> str:
         return "people"
-
-    async def download_csv(self) -> Path:
-        url = "***REMOVED***/data/{}/people.csv".format(self.config.headquarters_api_key)
-
-        dest = MISSION_DIR / "people.csv"
-        if dest.exists():
-            log.info("CSV already exists at %s, skipping download", dest)
-            return dest
-
-        log.info("Downloading CSV -> %s", dest)
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            dest.write_bytes(response.content)
-
-        log.info("CSV saved (%d bytes)", dest.stat().st_size)
-        return dest
 
     def filter_csv(self, path: Path) -> list[dict]:
         results = []
@@ -113,7 +94,8 @@ class Mission01(BaseMission):
         return people
 
     async def run(self) -> None:
-        csv_path = await self.download_csv()
+        url = "***REMOVED***/data/{}/people.csv".format(self.config.headquarters_api_key)
+        csv_path = await self.download_csv(url, MISSION_DIR / "people.csv")
         filtered_path = MISSION_DIR / "people_filtered.csv"
 
         if filtered_path.exists():
