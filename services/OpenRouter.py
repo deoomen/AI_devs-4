@@ -1,12 +1,10 @@
-import logging
-from typing import TypeVar
-
 import instructor
+import logging
 from openai import AsyncOpenAI
 from pydantic import BaseModel
+from typing import TypeVar
 
 log = logging.getLogger(__name__)
-
 T = TypeVar("T", bound=BaseModel)
 
 

@@ -1,6 +1,6 @@
+import asyncio
 import logging
 import sys
-import asyncio
 from importlib import import_module
 
 def init_loggers() -> None:
