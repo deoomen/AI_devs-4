@@ -30,6 +30,10 @@ class TaggingResponse(BaseModel):
 
 
 class Mission01(BaseMission):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._openrouter = OpenRouterClient(api_key=self.config.openrouter_api_key)
+
     def get_task_name(self) -> str:
         return "people"
 
@@ -71,7 +75,7 @@ class Mission01(BaseMission):
         return results
 
     async def tag_people(self, people: list[dict]) -> list[dict]:
-        client = OpenRouterClient(api_key=self.config.openrouter_api_key)
+        client = self._openrouter
 
         indexed = list(enumerate(people))
 
