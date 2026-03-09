@@ -11,7 +11,6 @@ Then:
 ```sh
 python -m venv .venv
 source .venv/bin/activate
-export $(cat .env)
 pip install -r requirements.txt
 python main.py <mission_number>
 deactivate
