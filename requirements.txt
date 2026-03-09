@@ -1,2 +1,5 @@
 httpx
 python-dotenv
+openai
+instructor
+pydantic
