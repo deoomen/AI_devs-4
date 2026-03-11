@@ -50,3 +50,36 @@ class AIdevs4:
             mission_name,
             report,
         )
+
+    async def api_location(self, name: str, surname: str) -> list[dict]:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.config.aidevs4_headquarters_system_url + "/api/location",
+                headers={'Content-Type': 'application/json'},
+                json={
+                    'apikey': self.config.aidevs4_headquarters_api_key,
+                    'name': name,
+                    'surname': surname,
+                }
+            )
+        logging.info('Location requested: {} {}'.format(name, surname))
+        json = response.json()
+
+        return json
+
+    async def api_accesslevel(self, name: str, surname: str, birth_year: int) -> dict:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.config.aidevs4_headquarters_system_url + "/api/accesslevel",
+                headers={'Content-Type': 'application/json'},
+                json={
+                    'apikey': self.config.aidevs4_headquarters_api_key,
+                    'name': name,
+                    'surname': surname,
+                    'birthYear': birth_year,
+                }
+            )
+        logging.info('Access level requested: {} {}'.format(name, surname))
+        json = response.json()
+
+        return json
