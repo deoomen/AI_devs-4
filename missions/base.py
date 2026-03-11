@@ -14,6 +14,7 @@ class BaseMission(ABC):
 
     def __init__(self, config: Config | None = None) -> None:
         self.config = config or load_config()
+        self.headquarter = AIdevs4(config=self.config)
 
     @abstractmethod
     def get_task_name(self) -> str:
@@ -25,19 +26,19 @@ class BaseMission(ABC):
         """Execute the mission."""
         raise NotImplementedError
 
-    async def download_csv(self, url: str, dest: Path) -> Path:
+    async def download_file(self, url: str, dest: Path) -> Path:
         if dest.exists():
-            log.info("CSV already exists at %s, skipping download", dest)
+            log.info("File already exists at %s, skipping download", dest)
             return dest
 
-        log.info("Downloading CSV -> %s", dest)
+        log.info("Downloading file -> %s", dest)
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
             response.raise_for_status()
             dest.write_bytes(response.content)
 
-        log.info("CSV saved (%d bytes)", dest.stat().st_size)
+        log.info("File saved (%d bytes)", dest.stat().st_size)
         return dest
 
     def save_csv(self, path: Path, data: list[dict]) -> None:
@@ -52,9 +53,8 @@ class BaseMission(ABC):
 
     async def report_to_headquarter(self, report: dict | list[dict]) -> str:
         log.info("Reporting to headquarter")
-        headquarter = AIdevs4(config=self.config)
 
-        return await headquarter.verify(
+        return await self.headquarter.verify(
             self.get_task_name(),
             report,
         )

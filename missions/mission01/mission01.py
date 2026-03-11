@@ -95,7 +95,7 @@ class Mission01(BaseMission):
 
     async def run(self) -> None:
         url = "***REMOVED***/data/{}/people.csv".format(self.config.aidevs4_headquarters_api_key)
-        csv_path = await self.download_csv(url, MISSION_DIR / "people.csv")
+        csv_path = await self.download_file(url, MISSION_DIR / "people.csv")
         filtered_path = MISSION_DIR / "people_filtered.csv"
 
         if filtered_path.exists():
@@ -112,6 +112,9 @@ class Mission01(BaseMission):
 
         transport = [p for p in people if "transport" in p.get("tags", "").split(",")]
         log.info("Transport workers (%d): %s", len(transport), transport)
+        suspects_path = MISSION_DIR / "suspects_people.csv"
+        self.save_csv(suspects_path, transport)
+        log.info("Saved %d transport suspects to %s", len(transport), suspects_path)
 
         report = [
             {
