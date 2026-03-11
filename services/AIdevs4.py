@@ -32,7 +32,7 @@ class AIdevs4:
                 api_url,
                 headers={'Content-Type': 'application/json'},
                 json={
-                    'apikey': self.config.headquarters_api_key,
+                    'apikey': self.config.aidevs4_headquarters_api_key,
                     'task': mission_name,
                     'answer': answer,
                 }
@@ -46,7 +46,7 @@ class AIdevs4:
 
     async def verify(self, mission_name: str, report) -> str:
         return await self.answer(
-            self.config.headquarters_system_url + "/verify",
+            self.config.aidevs4_headquarters_system_url + "/verify",
             mission_name,
             report,
         )

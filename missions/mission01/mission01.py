@@ -94,7 +94,7 @@ class Mission01(BaseMission):
         return people
 
     async def run(self) -> None:
-        url = "***REMOVED***/data/{}/people.csv".format(self.config.headquarters_api_key)
+        url = "***REMOVED***/data/{}/people.csv".format(self.config.aidevs4_headquarters_api_key)
         csv_path = await self.download_csv(url, MISSION_DIR / "people.csv")
         filtered_path = MISSION_DIR / "people_filtered.csv"
 
