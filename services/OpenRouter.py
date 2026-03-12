@@ -1,6 +1,7 @@
 import instructor
 import logging
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 from typing import TypeVar
 
@@ -29,6 +30,22 @@ class OpenRouterClient:
         content = response.choices[0].message.content
         log.debug("OpenRouter response: %s", content)
         return content
+
+    async def chat_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[dict],
+        model: str | None = None,
+    ):
+        response = await self._openai.chat.completions.create(
+            model=model or self.default_model,
+            messages=messages,
+            tools=tools,
+            tool_choice="auto",
+        )
+        choice = response.choices[0]
+        log.debug("OpenRouter tool response: finish_reason=%s", choice.finish_reason)
+        return choice
 
     async def chat_structured(
         self,
