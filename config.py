@@ -7,6 +7,7 @@ class Config:
     openrouter_api_key: str
     aidevs4_headquarters_api_key: str
     aidevs4_headquarters_system_url: str
+    proxy_agent_url: str
 
 
 def load_config() -> Config:
@@ -15,4 +16,5 @@ def load_config() -> Config:
         openrouter_api_key=os.environ["OPENROUTER_API_KEY"],
         aidevs4_headquarters_api_key=os.environ["AIDEVS4_HEADQUARTERS_API_KEY"],
         aidevs4_headquarters_system_url=os.environ["AIDEVS4_HEADQUARTERS_SYSTEM_URL"],
+        proxy_agent_url=os.environ.get("PROXY_AGENT_URL"),
     )

@@ -1,5 +1,9 @@
+fastapi
+dotenv
 httpx
 instructor
 openai
+pipreqs
 pydantic
 python-dotenv
+uvicorn

@@ -83,3 +83,37 @@ class AIdevs4:
         json = response.json()
 
         return json
+
+    async def api_packages_check(self, packageid: str) -> dict:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.config.aidevs4_headquarters_system_url + "/api/packages",
+                headers={'Content-Type': 'application/json'},
+                json={
+                    'apikey': self.config.aidevs4_headquarters_api_key,
+                    'action': 'check',
+                    'packageid': packageid,
+                }
+            )
+        logging.info('Packages requested: {}'.format(packageid))
+        json = response.json()
+
+        return json
+
+    async def api_packages_redirect(self, packageid: str, destination: str, code: str) -> dict:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.config.aidevs4_headquarters_system_url + "/api/packages",
+                headers={'Content-Type': 'application/json'},
+                json={
+                    'apikey': self.config.aidevs4_headquarters_api_key,
+                    'action': 'redirect',
+                    'packageid': packageid,
+                    'destination': destination,
+                    'code': code,
+                }
+            )
+        logging.info('Packages redirect requested: {} to {}'.format(packageid, destination))
+        json = response.json()
+
+        return json
