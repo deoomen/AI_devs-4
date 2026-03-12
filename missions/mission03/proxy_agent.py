@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -21,17 +20,53 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "get_current_datetime",
-            "description": "Returns the current date and time in ISO 8601 format.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            "name": "check_package",
+            "description": "Check the current status of a package by its ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "packageid": {
+                        "type": "string",
+                        "description": "The unique identifier of the package.",
+                    },
+                },
+                "required": ["packageid"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "redirect_package",
+            "description": "Redirect a package to a new destination using an authorization code.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "packageid": {
+                        "type": "string",
+                        "description": "The unique identifier of the package.",
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "The new destination address for the package.",
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Authorization code required to redirect the package.",
+                    },
+                },
+                "required": ["packageid", "destination", "code"],
+            },
         },
     },
 ]
 
 
 async def execute_tool(name: str, args: dict) -> str:
-    if name == "get_current_datetime":
-        return datetime.now().isoformat()
+    if name == "check_package":
+        return f"Package {args['packageid']}: status unknown (not implemented)."
+    if name == "redirect_package":
+        return f"Package {args['packageid']} redirect to '{args['destination']}' not implemented."
     return f"Unknown tool: {name}"
 
 
