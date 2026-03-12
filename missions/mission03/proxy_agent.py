@@ -1,8 +1,11 @@
 import json
+import logging
 from pathlib import Path
 from pydantic import BaseModel
 
 from config import load_config
+
+logger = logging.getLogger(__name__)
 from services.AIdevs4 import AIdevs4
 from services.OpenRouter import OpenRouterClient
 from services.SessionStore import SessionStore
@@ -120,6 +123,7 @@ class ProxyAgent:
         self._llm = OpenRouterClient(api_key=config.openrouter_api_key, default_model=MODEL)
 
     async def handle_message(self, message: OperatorMessage) -> AgentMessage:
+        logger.info("[%s] user: %s", message.sessionID, message.msg)
         session_store.add_message(message.sessionID, "user", message.msg)
 
         # Build messages for LLM: system + full history (already includes new user msg)
@@ -147,6 +151,7 @@ class ProxyAgent:
                     })
             else:
                 text = choice.message.content or ""
+                logger.info("[%s] assistant: %s", message.sessionID, text)
                 session_store.add_message(message.sessionID, "assistant", text)
                 return AgentMessage(msg=text)
 

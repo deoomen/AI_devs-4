@@ -3,17 +3,7 @@ import logging
 import sys
 from importlib import import_module
 
-def init_loggers() -> None:
-    level = logging.INFO
-    root = logging.getLogger()
-    root.setLevel(level)
-
-    stdout_formatter = logging.Formatter('[%(asctime)s][%(name)s][%(levelname)s] - %(message)s - [%(module)s/%(filename)s::%(funcName)s:%(lineno)d]')
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(level)
-    stdout_handler.setFormatter(stdout_formatter)
-
-    root.addHandler(stdout_handler)
+from services.Logging import init_loggers
 
 async def main() -> None:
     init_loggers()
