@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from config import load_config
+from services.AIdevs4 import AIdevs4
 from services.OpenRouter import OpenRouterClient
 from services.SessionStore import SessionStore
 
@@ -77,11 +78,18 @@ TOOLS = [
 ]
 
 
+_aidevs4 = AIdevs4()
+
+
 async def execute_tool(name: str, args: dict) -> str:
     if name == "check_package":
-        return f"Package {args['packageid']}: status unknown (not implemented)."
+        result = await _aidevs4.api_packages_check(args["packageid"])
+        return json.dumps(result)
     if name == "redirect_package":
-        return f"Package {args['packageid']} redirect to '{args['destination']}' not implemented."
+        result = await _aidevs4.api_packages_redirect(
+            args["packageid"], args["destination"], args["code"]
+        )
+        return json.dumps(result)
     return f"Unknown tool: {name}"
 
 

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from proxy_agent import ProxyAgent, OperatorMessage, AgentMessage
+from missions.mission03.proxy_agent import ProxyAgent, OperatorMessage, AgentMessage
 
 
 app = FastAPI(
