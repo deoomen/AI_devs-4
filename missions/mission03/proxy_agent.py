@@ -4,12 +4,11 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from config import load_config
+
+logger = logging.getLogger(__name__)
 from services.AIdevs4 import AIdevs4
 from services.OpenRouter import OpenRouterClient
 from services.SessionStore import SessionStore
-from services.ToolCalling import Tool, ToolCalling
-
-logger = logging.getLogger(__name__)
 
 SESSIONS_DIR = Path(__file__).parent / ".sessions"
 MAX_TOOL_ITERATIONS = 5
@@ -37,9 +36,8 @@ You have access to:
 # Tool definitions
 # ---------------------------------------------------------------------------
 
-CHECK_PACKAGE_TOOL = Tool(
-    name="check_package",
-    definition={
+TOOLS = [
+    {
         "type": "function",
         "function": {
             "name": "check_package",
@@ -56,11 +54,7 @@ CHECK_PACKAGE_TOOL = Tool(
             },
         },
     },
-)
-
-REDIRECT_PACKAGE_TOOL = Tool(
-    name="redirect_package",
-    definition={
+    {
         "type": "function",
         "function": {
             "name": "redirect_package",
@@ -85,7 +79,22 @@ REDIRECT_PACKAGE_TOOL = Tool(
             },
         },
     },
-)
+]
+
+
+_aidevs4 = AIdevs4()
+
+
+async def execute_tool(name: str, args: dict) -> str:
+    if name == "check_package":
+        result = await _aidevs4.api_packages_check(args["packageid"])
+        return json.dumps(result)
+    if name == "redirect_package":
+        result = await _aidevs4.api_packages_redirect(
+            args["packageid"], args["destination"], args["code"]
+        )
+        return json.dumps(result)
+    return f"Unknown tool: {name}"
 
 
 # ---------------------------------------------------------------------------
@@ -112,16 +121,6 @@ class ProxyAgent:
     def __init__(self):
         config = load_config()
         self._llm = OpenRouterClient(api_key=config.openrouter_api_key, default_model=MODEL)
-        self._aidevs4 = AIdevs4(config=config)
-        self._tools = ToolCalling(max_iterations=MAX_TOOL_ITERATIONS)
-        self._tools.register_tool(CHECK_PACKAGE_TOOL, self._check_package)
-        self._tools.register_tool(REDIRECT_PACKAGE_TOOL, self._redirect_package)
-
-    async def _check_package(self, packageid: str) -> dict:
-        return await self._aidevs4.api_packages_check(packageid)
-
-    async def _redirect_package(self, packageid: str, destination: str, code: str) -> dict:
-        return await self._aidevs4.api_packages_redirect(packageid, destination, code)
 
     async def handle_message(self, message: OperatorMessage) -> AgentMessage:
         logger.info("[%s] user: %s", message.sessionID, message.msg)
@@ -132,15 +131,16 @@ class ProxyAgent:
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
         messages += [{"role": m.role, "content": m.content} for m in history]
 
-        for _ in range(self._tools.max_iterations):
-            choice = await self._llm.chat_with_tools(messages=messages, tools=self._tools.get_definitions())
+        for _ in range(MAX_TOOL_ITERATIONS):
+            choice = await self._llm.chat_with_tools(messages=messages, tools=TOOLS)
 
             if choice.finish_reason == "tool_calls":
                 assistant_msg = choice.message
+                # Append assistant message with tool_calls to in-memory messages
                 messages.append(assistant_msg.model_dump(exclude_unset=True))
 
                 for tool_call in assistant_msg.tool_calls:
-                    result = await self._tools.execute_tool(
+                    result = await execute_tool(
                         tool_call.function.name,
                         json.loads(tool_call.function.arguments),
                     )
