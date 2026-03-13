@@ -1,9 +1,7 @@
 import csv
 import httpx
-import json
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from config import Config, load_config
 from pathlib import Path
 from services.AIdevs4 import AIdevs4
@@ -17,8 +15,6 @@ class BaseMission(ABC):
     def __init__(self, config: Config | None = None) -> None:
         self.config = config or load_config()
         self.headquarter = AIdevs4(config=self.config)
-        self._tool_handlers: dict[str, Callable] = {}
-        self._max_tool_iterations: int = 5
 
     @abstractmethod
     def get_task_name(self) -> str:
@@ -29,19 +25,6 @@ class BaseMission(ABC):
     async def run(self) -> None:
         """Execute the mission."""
         raise NotImplementedError
-
-    def set_max_tool_iterations(self, n: int) -> None:
-        self._max_tool_iterations = n
-
-    def register_tool(self, name: str, handler: Callable) -> None:
-        self._tool_handlers[name] = handler
-
-    async def execute_tool(self, name: str, args: dict) -> str:
-        handler = self._tool_handlers.get(name)
-        if handler is None:
-            return f"Unknown tool: {name}"
-        result = await handler(**args)
-        return json.dumps(result)
 
     async def download_file(self, url: str, dest: Path) -> Path:
         if dest.exists():
