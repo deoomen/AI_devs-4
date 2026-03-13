@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import math
-from missions.base import BaseMission
+from missions.base_mission import BaseMission
 from pathlib import Path
 from pydantic import BaseModel
 

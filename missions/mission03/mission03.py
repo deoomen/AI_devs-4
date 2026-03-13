@@ -1,4 +1,4 @@
-from missions.base import BaseMission
+from missions.base_mission import BaseMission
 
 class Mission03(BaseMission):
     def __init__(self, *args, **kwargs) -> None:

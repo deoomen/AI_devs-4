@@ -1,6 +1,6 @@
 import csv
 import logging
-from missions.base import BaseMission
+from missions.base_mission import BaseMission
 from pathlib import Path
 from pydantic import BaseModel
 from services.OpenRouter import OpenRouterClient
