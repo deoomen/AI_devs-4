@@ -10,8 +10,14 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class OpenRouterClient:
-    def __init__(self, api_key: str, default_model: str = "openai/gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: str,
+        default_model: str = "openai/gpt-4o-mini",
+        vision_model: str = "google/gemini-3-flash-preview",
+    ):
         self.default_model = default_model
+        self.vision_model = vision_model
         self._openai = AsyncOpenAI(
             api_key=api_key,
             base_url="https://openrouter.ai/api/v1",
@@ -29,6 +35,19 @@ class OpenRouterClient:
         )
         content = response.choices[0].message.content
         log.debug("OpenRouter response: %s", content)
+        return content
+
+    async def vision(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> str:
+        response = await self._openai.chat.completions.create(
+            model=model or self.vision_model,
+            messages=messages,
+        )
+        content = response.choices[0].message.content
+        log.debug("OpenRouter vision response: %s", content)
         return content
 
     async def chat_with_tools(
