@@ -4,14 +4,13 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from config import load_config
+from missions.base import BaseMission
 
 logger = logging.getLogger(__name__)
-from services.AIdevs4 import AIdevs4
 from services.OpenRouter import OpenRouterClient
 from services.SessionStore import SessionStore
 
 SESSIONS_DIR = Path(__file__).parent / ".sessions"
-MAX_TOOL_ITERATIONS = 5
 MODEL = "openai/gpt-4o-mini"
 
 SYSTEM_PROMPT = """You are a friendly logistics support assistant for a parcel delivery system.
@@ -82,21 +81,6 @@ TOOLS = [
 ]
 
 
-_aidevs4 = AIdevs4()
-
-
-async def execute_tool(name: str, args: dict) -> str:
-    if name == "check_package":
-        result = await _aidevs4.api_packages_check(args["packageid"])
-        return json.dumps(result)
-    if name == "redirect_package":
-        result = await _aidevs4.api_packages_redirect(
-            args["packageid"], args["destination"], args["code"]
-        )
-        return json.dumps(result)
-    return f"Unknown tool: {name}"
-
-
 # ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
@@ -117,10 +101,24 @@ session_store = SessionStore(SESSIONS_DIR)
 # Agent
 # ---------------------------------------------------------------------------
 
-class ProxyAgent:
+class ProxyAgent(BaseMission):
     def __init__(self):
-        config = load_config()
-        self._llm = OpenRouterClient(api_key=config.openrouter_api_key, default_model=MODEL)
+        super().__init__()
+        self._llm = OpenRouterClient(api_key=self.config.openrouter_api_key, default_model=MODEL)
+        self.register_tool("check_package", self._check_package)
+        self.register_tool("redirect_package", self._redirect_package)
+
+    def get_task_name(self) -> str:
+        return "proxy"
+
+    async def run(self) -> None:
+        raise NotImplementedError("ProxyAgent is a service — use handle_message instead.")
+
+    async def _check_package(self, packageid: str) -> dict:
+        return await self.headquarter.api_packages_check(packageid)
+
+    async def _redirect_package(self, packageid: str, destination: str, code: str) -> dict:
+        return await self.headquarter.api_packages_redirect(packageid, destination, code)
 
     async def handle_message(self, message: OperatorMessage) -> AgentMessage:
         logger.info("[%s] user: %s", message.sessionID, message.msg)
@@ -131,7 +129,7 @@ class ProxyAgent:
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
         messages += [{"role": m.role, "content": m.content} for m in history]
 
-        for _ in range(MAX_TOOL_ITERATIONS):
+        for _ in range(self._max_tool_iterations):
             choice = await self._llm.chat_with_tools(messages=messages, tools=TOOLS)
 
             if choice.finish_reason == "tool_calls":
@@ -140,7 +138,7 @@ class ProxyAgent:
                 messages.append(assistant_msg.model_dump(exclude_unset=True))
 
                 for tool_call in assistant_msg.tool_calls:
-                    result = await execute_tool(
+                    result = await self.execute_tool(
                         tool_call.function.name,
                         json.loads(tool_call.function.arguments),
                     )
