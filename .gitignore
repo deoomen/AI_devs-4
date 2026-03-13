@@ -3,4 +3,4 @@
 .venv
 *.iml
 .env
-/CODE_REVIEW.md
+.workspace/
