@@ -6,7 +6,7 @@ from importlib import import_module
 from services.Logging import init_loggers
 
 async def main() -> None:
-    init_loggers()
+    init_loggers(logging.INFO)
 
     try:
         if 1 == len(sys.argv):
