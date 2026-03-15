@@ -52,7 +52,8 @@ class OpenRouterProvider:
 
         logger.debug("LLM request: model=%s messages=%d tools=%d", model, len(openai_messages), len(tools or []))
 
-        response = await self._call_with_retry(kwargs)
+        response, headers = await self._call_with_retry(kwargs)
+        _log_rate_limits(headers, kwargs["model"])
         choice = response.choices[0]
 
         tool_calls = []
@@ -77,7 +78,8 @@ class OpenRouterProvider:
     async def _call_with_retry(self, kwargs: dict):
         for attempt in range(MAX_RETRIES):
             try:
-                return await self._client.chat.completions.create(**kwargs)
+                raw = await self._client.chat.completions.with_raw_response.create(**kwargs)
+                return raw.parse(), raw.headers
             except RateLimitError as e:
                 retry_after = _parse_retry_after(e)
                 if attempt == MAX_RETRIES - 1:
@@ -87,6 +89,22 @@ class OpenRouterProvider:
                     attempt + 1, MAX_RETRIES, retry_after,
                 )
                 await asyncio.sleep(retry_after)
+
+
+_RATE_LIMIT_HEADERS = [
+    "x-ratelimit-limit-requests",
+    "x-ratelimit-limit-tokens",
+    "x-ratelimit-remaining-requests",
+    "x-ratelimit-remaining-tokens",
+    "x-ratelimit-reset-requests",
+    "x-ratelimit-reset-tokens",
+]
+
+
+def _log_rate_limits(headers, model: str) -> None:
+    limits = {h: headers.get(h) for h in _RATE_LIMIT_HEADERS if headers.get(h)}
+    if limits:
+        logger.debug("Provider rate limits [%s]: %s", model, limits)
 
 
 def _parse_retry_after(error: RateLimitError) -> float:
