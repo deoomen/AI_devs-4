@@ -18,7 +18,6 @@ from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
 from src.domain.agent import WaitEntry
 from src.runtime.runner import deliver_result, run_agent
-from src.runtime.template import resolve_vars
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 
@@ -139,7 +138,6 @@ class StandaloneAgent:
         return await self._run_and_collect(ctx, agent)
 
     async def _add_user_message(self, ctx: RuntimeContext, agent_id: str, message: str) -> None:
-        message = resolve_vars(message)
         seq = await ctx.repos.items.next_sequence(agent_id)
         item = Item(
             id=str(uuid.uuid4()),

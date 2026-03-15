@@ -13,7 +13,6 @@ from src.domain.types import AgentStatus, ItemType
 from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
-from src.runtime.template import resolve_vars
 from src.workspace.loader import load_agent_config
 
 router = APIRouter(prefix="/api/chat")
@@ -53,7 +52,7 @@ async def completions(
         sequence=0,
         type=ItemType.MESSAGE,
         role="user",
-        content=resolve_vars(req.input),
+        content=req.input,
     )
     await ctx.repos.items.create(user_item)
 

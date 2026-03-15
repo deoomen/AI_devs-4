@@ -56,6 +56,8 @@ class ToolRegistry:
         ]
 
     async def execute(self, name: str, arguments: dict) -> ToolResult:
+        from .template import resolve_args
+
         tool = self._tools.get(name)
         if tool is None:
             return ToolResult(output=f"Unknown tool: {name}", is_error=True)
@@ -64,4 +66,5 @@ class ToolRegistry:
             return ToolResult(output="", is_error=False)
         if tool.execute is None:
             return ToolResult(output=f"Tool {name} has no executor", is_error=True)
-        return await tool.execute(arguments)
+        resolved = resolve_args(arguments)
+        return await tool.execute(resolved)
