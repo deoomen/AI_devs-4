@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from app.src.domain.types import AgentStatus
+
 
 class Base(DeclarativeBase):
     pass
@@ -38,7 +40,7 @@ class AgentRow(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="pending")
+    status: Mapped[str] = mapped_column(String(20), default=AgentStatus.PENDING.value)
     config_json: Mapped[str] = mapped_column(Text, nullable=False)
     waiting_for_json: Mapped[str] = mapped_column(Text, default="[]")
     turn_count: Mapped[int] = mapped_column(Integer, default=0)
