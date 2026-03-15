@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     openrouter_default_model: str = "openai/gpt-4.1-mini"
     provider_max_retries: int = 3
 
+    # AIDevs Headquarters
+    aidevs4_headquarters_api_key: str = ""
+    aidevs4_headquarters_url: str = "***REMOVED***"
+
     # Agent defaults
     agent_default_name: str = "alice"
     agent_max_turns: int = 10

@@ -2,6 +2,7 @@
 name: alice
 model: ""
 tools:
+  - aidevs_headquarters
   - ask_user
   - http_request
 max_turns: 10

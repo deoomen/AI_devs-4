@@ -12,6 +12,7 @@ from src.middleware.rate_limit import rate_limiter
 from src.providers.openrouter import OpenRouterProvider
 from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
+from src.tools.aidevs_headquarters import aidevs_headquarters_tool
 from src.tools.ask_user import ask_user_tool
 from src.tools.http_request import http_request_tool
 from src.tools.registry import ToolRegistry
@@ -22,6 +23,7 @@ _provider = OpenRouterProvider()
 
 def _build_tool_registry() -> ToolRegistry:
     registry = ToolRegistry()
+    registry.register(aidevs_headquarters_tool)
     registry.register(ask_user_tool)
     registry.register(http_request_tool)
     return registry

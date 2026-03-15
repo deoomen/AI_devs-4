@@ -1,0 +1,78 @@
+import json
+import logging
+
+import httpx
+
+from src.config import settings
+from src.domain.types import ToolType
+from .types import Tool, ToolDefinition, ToolResult
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_TIMEOUT = 30.0
+
+
+async def _execute(arguments: dict) -> ToolResult:
+    endpoint = arguments.get("endpoint", "/verify")
+    task = arguments.get("task", "")
+    answer = arguments.get("answer")
+
+    if not task:
+        return ToolResult(output="Missing task name", is_error=True)
+
+    url = f"{settings.aidevs4_headquarters_url}{endpoint}"
+    payload = {
+        "apikey": settings.aidevs4_headquarters_api_key,
+        "task": task,
+        "answer": answer,
+    }
+
+    logger.info("headquarters %s task=%s", endpoint, task)
+
+    try:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            response = await client.post(url, json=payload)
+    except httpx.TimeoutException:
+        return ToolResult(output=f"Request timed out after {DEFAULT_TIMEOUT}s", is_error=True)
+    except httpx.RequestError as e:
+        return ToolResult(output=f"Request failed: {e}", is_error=True)
+
+    try:
+        result = response.json()
+        body_str = json.dumps(result, ensure_ascii=False)
+    except (json.JSONDecodeError, ValueError):
+        body_str = response.text
+
+    output = f"HTTP {response.status_code}\n{body_str}"
+    logger.info("headquarters response: %d %s", response.status_code, body_str[:200])
+
+    return ToolResult(output=output, is_error=response.status_code >= 400)
+
+
+aidevs_headquarters_tool = Tool(
+    name="aidevs_headquarters",
+    type=ToolType.SYNC,
+    definition=ToolDefinition(
+        name="aidevs_headquarters",
+        description="Communicate with the AIDevs headquarters at ***REMOVED***. Use this to send mission answers via /verify or interact with any headquarters endpoint. The API key is injected automatically.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "endpoint": {
+                    "type": "string",
+                    "description": "API endpoint path (default: /verify)",
+                    "default": "/verify",
+                },
+                "task": {
+                    "type": "string",
+                    "description": "Task name (e.g. 'railway', 'poligon')",
+                },
+                "answer": {
+                    "description": "The answer payload — can be a string, number, object, or array depending on the task",
+                },
+            },
+            "required": ["task", "answer"],
+        },
+    ),
+    execute=_execute,
+)
