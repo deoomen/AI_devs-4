@@ -21,9 +21,10 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./agent.db"
 
-    # OpenRouter
+    # Provider
     openrouter_api_key: str = ""
     openrouter_default_model: str = "openai/gpt-4.1-mini"
+    provider_max_retries: int = 3
 
     # Agent defaults
     agent_default_name: str = "alice"

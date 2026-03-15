@@ -9,9 +9,6 @@ from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall
 
 logger = logging.getLogger(__name__)
 
-MAX_RETRIES = 3
-
-
 class OpenRouterProvider(Provider):
     def __init__(self):
         self._client = AsyncOpenAI(
@@ -76,17 +73,17 @@ class OpenRouterProvider(Provider):
         )
 
     async def _call_with_retry(self, kwargs: dict):
-        for attempt in range(MAX_RETRIES):
+        for attempt in range(settings.provider_max_retries):
             try:
                 raw = await self._client.chat.completions.with_raw_response.create(**kwargs)
                 return raw.parse(), raw.headers
             except RateLimitError as e:
                 retry_after = _parse_retry_after(e)
-                if attempt == MAX_RETRIES - 1:
+                if attempt == settings.provider_max_retries - 1:
                     raise
                 logger.warning(
                     "Provider rate limited (attempt %d/%d), retrying in %.1fs",
-                    attempt + 1, MAX_RETRIES, retry_after,
+                    attempt + 1, settings.provider_max_retries, retry_after,
                 )
                 await asyncio.sleep(retry_after)
 
