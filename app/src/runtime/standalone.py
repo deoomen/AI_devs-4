@@ -16,7 +16,8 @@ from src.events.logger import log_event
 from src.providers.openrouter import OpenRouterProvider
 from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
-from src.runtime.runner import run_agent
+from src.domain.agent import WaitEntry
+from src.runtime.runner import deliver_result, run_agent
 from src.tools.aidevs_headquarters import aidevs_headquarters_tool
 from src.tools.ask_user import ask_user_tool
 from src.tools.http_request import http_request_tool
@@ -50,6 +51,7 @@ class AgentResult:
     agent_id: str
     status: AgentStatus
     output: str | None
+    waiting_for: list[WaitEntry] | None = None
 
 
 class StandaloneAgent:
@@ -80,6 +82,37 @@ class StandaloneAgent:
 
             await db.commit()
         return result
+
+    async def deliver(self, call_id: str, output: str) -> AgentResult:
+        """Deliver an answer to a waiting agent (e.g. ask_user response)."""
+        if self._agent_id is None:
+            raise ValueError("No agent to deliver to")
+
+        await _ensure_db()
+
+        async with async_session_factory() as db:
+            repos = create_repositories(db)
+            ctx = RuntimeContext(
+                repos=repos, provider=self._provider,
+                tools=self._tools, events=self._events,
+            )
+
+            agent = await repos.agents.get(self._agent_id)
+            if agent is None:
+                raise ValueError(f"Agent '{self._agent_id}' not found in DB")
+            if agent.status != AgentStatus.WAITING:
+                raise ValueError(f"Agent is not waiting (status={agent.status})")
+
+            agent = await deliver_result(ctx, agent, call_id, output)
+            items = await repos.items.list_by_agent(agent.id)
+            await db.commit()
+
+        return AgentResult(
+            agent_id=agent.id,
+            status=agent.status,
+            output=_extract_last_assistant_text(items),
+            waiting_for=agent.waiting_for if agent.waiting_for else None,
+        )
 
     async def _create_and_run(self, ctx: RuntimeContext, message: str) -> AgentResult:
         agent_config = load_agent_config(self._agent_name)
@@ -134,6 +167,7 @@ class StandaloneAgent:
             agent_id=agent.id,
             status=agent.status,
             output=_extract_last_assistant_text(items),
+            waiting_for=agent.waiting_for if agent.waiting_for else None,
         )
 
 
