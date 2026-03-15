@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from .types import SessionStatus
+
 
 @dataclass
 class Session:
     id: str
     user_id: str
-    status: str = "active"
+    status: SessionStatus = SessionStatus.ACTIVE

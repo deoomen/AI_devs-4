@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import SessionRow
 from src.domain.session import Session
+from src.domain.types import SessionStatus
 
 
 class SessionRepository:
@@ -10,7 +11,7 @@ class SessionRepository:
         self._db = db
 
     async def create(self, session: Session) -> Session:
-        row = SessionRow(id=session.id, user_id=session.user_id, status=session.status)
+        row = SessionRow(id=session.id, user_id=session.user_id, status=session.status.value)
         self._db.add(row)
         await self._db.flush()
         return session
@@ -22,4 +23,4 @@ class SessionRepository:
         row = result.scalar_one_or_none()
         if row is None:
             return None
-        return Session(id=row.id, user_id=row.user_id, status=row.status)
+        return Session(id=row.id, user_id=row.user_id, status=SessionStatus(row.status))

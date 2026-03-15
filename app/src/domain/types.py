@@ -9,6 +9,11 @@ class AgentStatus(StrEnum):
     FAILED = "failed"
 
 
+class SessionStatus(StrEnum):
+    ACTIVE = "active"
+    CLOSED = "closed"
+
+
 class ItemType(StrEnum):
     MESSAGE = "message"
     FUNCTION_CALL = "function_call"
