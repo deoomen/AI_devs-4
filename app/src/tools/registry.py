@@ -13,13 +13,13 @@ class ToolRegistry:
     @classmethod
     def build_default(cls) -> "ToolRegistry":
         """Create a registry with all built-in tools."""
-        from .aidevs_headquarters import aidevs_headquarters_tool
-        from .ask_user import ask_user_tool
-        from .csv_filter import csv_filter_tool
-        from .http_request import http_request_tool
-        from .list_files import list_files_tool
-        from .read_file import read_file_tool
-        from .write_file import write_file_tool
+        from .native.aidevs_headquarters import aidevs_headquarters_tool
+        from .native.ask_user import ask_user_tool
+        from .native.csv_filter import csv_filter_tool
+        from .native.http_request import http_request_tool
+        from .native.list_files import list_files_tool
+        from .native.read_file import read_file_tool
+        from .native.write_file import write_file_tool
 
         registry = cls()
         registry.register(aidevs_headquarters_tool)

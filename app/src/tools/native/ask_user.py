@@ -1,5 +1,5 @@
 from src.domain.types import ToolType
-from .types import Tool, ToolDefinition
+from ..types import Tool, ToolDefinition
 
 ask_user_tool = Tool(
     name="ask_user",

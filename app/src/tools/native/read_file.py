@@ -1,8 +1,8 @@
 import logging
 
 from src.domain.types import ToolType
-from .types import Tool, ToolDefinition, ToolResult
-from .workspace import safe_resolve
+from ..types import Tool, ToolDefinition, ToolResult
+from ..workspace import safe_resolve
 
 logger = logging.getLogger(__name__)
 

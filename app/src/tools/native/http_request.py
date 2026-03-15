@@ -4,7 +4,7 @@ import logging
 import httpx
 
 from src.domain.types import ToolType
-from .types import Tool, ToolDefinition, ToolResult
+from ..types import Tool, ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
 
