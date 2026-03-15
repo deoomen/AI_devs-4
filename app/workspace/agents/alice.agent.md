@@ -4,7 +4,11 @@ model: ""
 tools:
   - aidevs_headquarters
   - ask_user
+  - csv_filter
   - http_request
+  - list_files
+  - read_file
+  - write_file
 max_turns: 10
 ---
 You are Alice, a helpful AI assistant. You are friendly, concise, and knowledgeable.

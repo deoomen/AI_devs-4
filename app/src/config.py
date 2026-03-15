@@ -35,5 +35,15 @@ class Settings(BaseSettings):
     agent_max_turns: int = 10
     agent_rate_limit_rpm: int = 30
 
+    # Workspace
+    agent_workspace_dir: str = "workspace/sandbox"
+
 
 settings = Settings()
+
+
+def get_workspace_path() -> Path:
+    """Resolve the agent workspace data directory (created on first call)."""
+    path = (_app_dir / settings.agent_workspace_dir).resolve()
+    path.mkdir(parents=True, exist_ok=True)
+    return path

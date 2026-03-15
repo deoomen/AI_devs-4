@@ -15,12 +15,20 @@ class ToolRegistry:
         """Create a registry with all built-in tools."""
         from .aidevs_headquarters import aidevs_headquarters_tool
         from .ask_user import ask_user_tool
+        from .csv_filter import csv_filter_tool
         from .http_request import http_request_tool
+        from .list_files import list_files_tool
+        from .read_file import read_file_tool
+        from .write_file import write_file_tool
 
         registry = cls()
         registry.register(aidevs_headquarters_tool)
         registry.register(ask_user_tool)
+        registry.register(csv_filter_tool)
         registry.register(http_request_tool)
+        registry.register(list_files_tool)
+        registry.register(read_file_tool)
+        registry.register(write_file_tool)
         return registry
 
     def register(self, tool: Tool) -> None:
