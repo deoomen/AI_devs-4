@@ -4,4 +4,5 @@
 *.iml
 .env
 .workspace/
-agent.db
+*.db
+*.db-journal
