@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.db.engine import async_session_factory
@@ -61,7 +61,23 @@ async def get_current_user(
     return user
 
 
-async def check_rate_limit(user: Annotated[User, Depends(get_current_user)]) -> User:
-    if not rate_limiter.check(user.id):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+async def check_rate_limit(
+    response: Response,
+    user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    info = rate_limiter.check(user.id)
+    response.headers["X-RateLimit-Limit"] = str(info.limit)
+    response.headers["X-RateLimit-Remaining"] = str(info.remaining)
+    response.headers["X-RateLimit-Reset"] = str(info.reset_seconds)
+    if not info.allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Try again in {info.reset_seconds}s",
+            headers={
+                "Retry-After": str(info.reset_seconds),
+                "X-RateLimit-Limit": str(info.limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(info.reset_seconds),
+            },
+        )
     return user

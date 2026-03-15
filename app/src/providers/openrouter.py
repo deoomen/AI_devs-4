@@ -1,12 +1,15 @@
+import asyncio
 import json
 import logging
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
 from .types import ProviderMessage, ProviderResponse, ProviderToolCall
 
 logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
 
 
 class OpenRouterProvider:
@@ -48,7 +51,8 @@ class OpenRouterProvider:
             kwargs["tool_choice"] = "auto"
 
         logger.debug("LLM request: model=%s messages=%d tools=%d", model, len(openai_messages), len(tools or []))
-        response = await self._client.chat.completions.create(**kwargs)
+
+        response = await self._call_with_retry(kwargs)
         choice = response.choices[0]
 
         tool_calls = []
@@ -69,3 +73,30 @@ class OpenRouterProvider:
             tool_calls=tool_calls,
             finish_reason=choice.finish_reason or "stop",
         )
+
+    async def _call_with_retry(self, kwargs: dict):
+        for attempt in range(MAX_RETRIES):
+            try:
+                return await self._client.chat.completions.create(**kwargs)
+            except RateLimitError as e:
+                retry_after = _parse_retry_after(e)
+                if attempt == MAX_RETRIES - 1:
+                    raise
+                logger.warning(
+                    "Provider rate limited (attempt %d/%d), retrying in %.1fs",
+                    attempt + 1, MAX_RETRIES, retry_after,
+                )
+                await asyncio.sleep(retry_after)
+
+
+def _parse_retry_after(error: RateLimitError) -> float:
+    headers = getattr(error, "response", None)
+    if headers is not None:
+        headers = getattr(headers, "headers", {})
+        retry_after = headers.get("retry-after") or headers.get("x-ratelimit-reset")
+        if retry_after:
+            try:
+                return max(float(retry_after), 1.0)
+            except ValueError:
+                pass
+    return 5.0
