@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
+from src.config import settings
+
 
 class ChatRequest(BaseModel):
-    agent: str = "alice"
+    agent: str = settings.agent_default_name
     input: str
     session_id: str | None = None
 

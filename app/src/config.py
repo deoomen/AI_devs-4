@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     openrouter_default_model: str = "openai/gpt-4.1-mini"
 
     # Agent defaults
+    agent_default_name: str = "alice"
     agent_max_turns: int = 10
     agent_rate_limit_rpm: int = 30
 
