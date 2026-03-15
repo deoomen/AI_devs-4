@@ -3,6 +3,7 @@ name: alice
 model: ""
 tools:
   - ask_user
+  - http_request
 max_turns: 10
 ---
 You are Alice, a helpful AI assistant. You are friendly, concise, and knowledgeable.
