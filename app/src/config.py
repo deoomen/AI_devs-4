@@ -38,6 +38,22 @@ class Settings(BaseSettings):
     # Workspace
     agent_workspace_dir: str = "workspace/sandbox"
 
+    # Template variable whitelist — maps {{PLACEHOLDER}} names to setting field names.
+    # Only listed keys are resolved in user messages.
+    template_whitelist: dict[str, str] = {
+        "AIDEVS4_HEADQUARTERS_API_KEY": "aidevs4_headquarters_api_key",
+        "AIDEVS4_HEADQUARTERS_SYSTEM_URL": "aidevs4_headquarters_url",
+    }
+
+    def get_template_vars(self) -> dict[str, str]:
+        """Resolve whitelisted placeholders to their current values."""
+        result = {}
+        for placeholder, field in self.template_whitelist.items():
+            value = getattr(self, field, None)
+            if value is not None:
+                result[placeholder] = str(value)
+        return result
+
 
 settings = Settings()
 
