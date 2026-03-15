@@ -10,6 +10,19 @@ class ToolRegistry:
     def __init__(self):
         self._tools: dict[str, Tool] = {}
 
+    @classmethod
+    def build_default(cls) -> "ToolRegistry":
+        """Create a registry with all built-in tools."""
+        from .aidevs_headquarters import aidevs_headquarters_tool
+        from .ask_user import ask_user_tool
+        from .http_request import http_request_tool
+
+        registry = cls()
+        registry.register(aidevs_headquarters_tool)
+        registry.register(ask_user_tool)
+        registry.register(http_request_tool)
+        return registry
+
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
         logger.info("Registered tool: %s (type=%s)", tool.name, tool.type)

@@ -18,9 +18,6 @@ from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
 from src.domain.agent import WaitEntry
 from src.runtime.runner import deliver_result, run_agent
-from src.tools.aidevs_headquarters import aidevs_headquarters_tool
-from src.tools.ask_user import ask_user_tool
-from src.tools.http_request import http_request_tool
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 
@@ -29,14 +26,6 @@ async def _ensure_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await seed_default_user()
-
-
-def _build_tools() -> ToolRegistry:
-    registry = ToolRegistry()
-    registry.register(aidevs_headquarters_tool)
-    registry.register(ask_user_tool)
-    registry.register(http_request_tool)
-    return registry
 
 
 def _extract_last_assistant_text(items: list[Item]) -> str | None:
@@ -60,7 +49,7 @@ class StandaloneAgent:
     def __init__(self, agent_name: str):
         self._agent_name = agent_name
         self._agent_id: str | None = None
-        self._tools = _build_tools()
+        self._tools = ToolRegistry.build_default()
         self._provider = OpenRouterProvider()
         self._events = EventEmitter()
         self._events.on("*", log_event)
