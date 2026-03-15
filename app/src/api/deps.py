@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.db.engine import async_session_factory
 from src.domain.user import User
@@ -9,11 +10,12 @@ from src.events.logger import log_event
 from src.middleware.auth import authenticate
 from src.middleware.rate_limit import rate_limiter
 from src.providers.openrouter import OpenRouterProvider
-from src.repositories import Repositories, create_repositories
+from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
 from src.tools.ask_user import ask_user_tool
 from src.tools.registry import ToolRegistry
 
+_bearer_scheme = HTTPBearer()
 _provider = OpenRouterProvider()
 
 
@@ -49,11 +51,11 @@ async def get_runtime() -> RuntimeContext:
 
 
 async def get_current_user(
-    authorization: Annotated[str | None, Header()] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(_bearer_scheme)],
 ) -> User:
     async with async_session_factory() as db:
         repos = create_repositories(db)
-        user = await authenticate(authorization, repos.users)
+        user = await authenticate(f"Bearer {credentials.credentials}", repos.users)
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return user
