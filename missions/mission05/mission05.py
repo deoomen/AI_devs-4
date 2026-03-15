@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "app"))
 log = logging.getLogger(__name__)
 
 USER_MESSAGE = """\
-Complete the "railway" mission at AIDevs headquarters.
+Complete the "railway" mission at AIDevs headquarters. You need to activate railway route with code "X-01".
 
 1. Start by sending action "help" to the railway task and carefully read the response
 2. The API is self-documenting — the response describes all available actions, parameters, and the required call sequence
@@ -29,8 +29,17 @@ class Mission05(BaseMission):
         return "railway"
 
     async def run(self) -> None:
-        from src.runtime.standalone import run_agent_standalone
+        from src.domain.types import AgentStatus
+        from src.runtime.standalone import StandaloneAgent
 
+        agent = StandaloneAgent("alice")
         log.info("Starting railway mission via agent")
-        result = await run_agent_standalone("alice", USER_MESSAGE)
-        log.info("Agent result:\n%s", result)
+        result = await agent.send(USER_MESSAGE)
+
+        while result.status == AgentStatus.WAITING and result.waiting_for:
+            for wait in result.waiting_for:
+                log.info("Agent asks: %s", result.output)
+                answer = input(f"[{wait.tool_name}] Your answer: ")
+                result = await agent.deliver(wait.call_id, answer)
+
+        log.info("Agent finished (status=%s):\n%s", result.status, result.output)
