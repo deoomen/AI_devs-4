@@ -10,7 +10,7 @@ from src.domain.agent import Agent, AgentConfig
 from src.domain.item import Item
 from src.domain.session import Session
 from src.domain.types import AgentStatus, ItemType
-from src.errors import AppError, error_envelope
+from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
 from src.workspace.loader import load_agent_config
@@ -26,7 +26,7 @@ async def completions(
 ):
     agent_config = load_agent_config(req.agent)
     if agent_config is None:
-        err = AppError(message=f"Agent '{req.agent}' not found", status_code=404, code="AGENT_NOT_FOUND")
+        err = AppError(message=f"Agent '{req.agent}' not found", status_code=404, code=ErrorCode.AGENT_NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
 
     if not agent_config.model:
@@ -60,7 +60,7 @@ async def completions(
     try:
         agent = await run_agent(ctx, agent)
     except Exception as e:
-        err = AppError(message=str(e), status_code=500, code="AGENT_ERROR")
+        err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
     items = await ctx.repos.items.list_by_agent(agent.id)
@@ -96,17 +96,17 @@ async def deliver(
 ):
     agent = await ctx.repos.agents.get(agent_id)
     if agent is None:
-        err = AppError(message="Agent not found", status_code=404, code="NOT_FOUND")
+        err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
 
     if agent.status != AgentStatus.WAITING:
-        err = AppError(message="Agent is not waiting for input", status_code=400, code="NOT_WAITING")
+        err = AppError(message="Agent is not waiting for input", status_code=400, code=ErrorCode.NOT_WAITING)
         return JSONResponse(status_code=400, content=error_envelope(err))
 
     try:
         agent = await deliver_result(ctx, agent, req.call_id, req.output)
     except Exception as e:
-        err = AppError(message=str(e), status_code=500, code="AGENT_ERROR")
+        err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
     items = await ctx.repos.items.list_by_agent(agent.id)
@@ -141,7 +141,7 @@ async def get_agent_status(
 ):
     agent = await ctx.repos.agents.get(agent_id)
     if agent is None:
-        err = AppError(message="Agent not found", status_code=404, code="NOT_FOUND")
+        err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
 
     items = await ctx.repos.items.list_by_agent(agent.id)
