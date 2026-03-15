@@ -6,3 +6,4 @@
 .workspace/
 *.db
 *.db-journal
+sandbox/

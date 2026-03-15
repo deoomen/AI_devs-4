@@ -16,6 +16,7 @@ class ToolRegistry:
         from .native.aidevs_headquarters import aidevs_headquarters_tool
         from .native.ask_user import ask_user_tool
         from .native.csv_filter import csv_filter_tool
+        from .native.download_file import download_file_tool
         from .native.http_request import http_request_tool
         from .native.list_files import list_files_tool
         from .native.read_file import read_file_tool
@@ -25,6 +26,7 @@ class ToolRegistry:
         registry.register(aidevs_headquarters_tool)
         registry.register(ask_user_tool)
         registry.register(csv_filter_tool)
+        registry.register(download_file_tool)
         registry.register(http_request_tool)
         registry.register(list_files_tool)
         registry.register(read_file_tool)

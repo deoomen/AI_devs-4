@@ -5,6 +5,7 @@ tools:
   - aidevs_headquarters
   - ask_user
   - csv_filter
+  - download_file
   - http_request
   - list_files
   - read_file
