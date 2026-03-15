@@ -47,10 +47,11 @@ class OpenRouterProvider(Provider):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
-        logger.debug("LLM request: model=%s messages=%d tools=%d", model, len(openai_messages), len(tools or []))
+        logger.info("LLM request: model=%s messages=%d tools=%d", model, len(openai_messages), len(tools or []))
 
         response, headers = await self._call_with_retry(kwargs)
         _log_rate_limits(headers, kwargs["model"])
+        await _wait_if_rate_limited(headers, kwargs["model"])
         choice = response.choices[0]
 
         tool_calls = []
@@ -101,7 +102,40 @@ _RATE_LIMIT_HEADERS = [
 def _log_rate_limits(headers, model: str) -> None:
     limits = {h: headers.get(h) for h in _RATE_LIMIT_HEADERS if headers.get(h)}
     if limits:
-        logger.debug("Provider rate limits [%s]: %s", model, limits)
+        logger.info("Provider rate limits [%s]: %s", model, limits)
+
+
+def _parse_reset_seconds(value: str) -> float | None:
+    """Parse reset header value like '15s', '1m30s', or plain seconds."""
+    if not value:
+        return None
+    # Plain number (seconds)
+    try:
+        return float(value)
+    except ValueError:
+        pass
+    # Duration format like "15s", "1m30s"
+    import re
+    match = re.match(r"(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?", value)
+    if match and (match.group(1) or match.group(2)):
+        minutes = float(match.group(1) or 0)
+        seconds = float(match.group(2) or 0)
+        return minutes * 60 + seconds
+    return None
+
+
+async def _wait_if_rate_limited(headers, model: str) -> None:
+    remaining = headers.get("x-ratelimit-remaining-requests")
+    reset = headers.get("x-ratelimit-reset-requests")
+
+    if remaining is not None and int(remaining) == 0 and reset:
+        wait_seconds = _parse_reset_seconds(reset)
+        if wait_seconds and wait_seconds > 0:
+            logger.info(
+                "Rate limit reached for [%s], waiting %.1fs before next call",
+                model, wait_seconds,
+            )
+            await asyncio.sleep(wait_seconds)
 
 
 def _parse_retry_after(error: RateLimitError) -> float:

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -41,11 +42,32 @@ async def _execute(arguments: dict) -> ToolResult:
         result = response.json()
         body_str = json.dumps(result, ensure_ascii=False)
     except (json.JSONDecodeError, ValueError):
+        result = {}
         body_str = response.text
 
-    output = f"HTTP {response.status_code}\n{body_str}"
     logger.info("headquarters response: %d %s", response.status_code, body_str[:200])
 
+    # Respect retry_after from response body on 429
+    if response.status_code == 429 and isinstance(result, dict):
+        retry_after = result.get("retry_after")
+        if retry_after:
+            wait = int(retry_after) + 1  # +1s safety margin
+            logger.info("Headquarters rate limited, waiting %ds before returning", wait)
+            await asyncio.sleep(wait)
+            # Retry the same request after waiting
+            try:
+                async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+                    response = await client.post(url, json=payload)
+                try:
+                    result = response.json()
+                    body_str = json.dumps(result, ensure_ascii=False)
+                except (json.JSONDecodeError, ValueError):
+                    body_str = response.text
+                logger.info("headquarters retry response: %d %s", response.status_code, body_str[:200])
+            except (httpx.TimeoutException, httpx.RequestError) as e:
+                return ToolResult(output=f"Retry failed: {e}", is_error=True)
+
+    output = f"HTTP {response.status_code}\n{body_str}"
     return ToolResult(output=output, is_error=response.status_code >= 400)
 
 
