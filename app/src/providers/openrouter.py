@@ -5,14 +5,14 @@ import logging
 from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
-from .types import ProviderMessage, ProviderResponse, ProviderToolCall
+from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall
 
 logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 
 
-class OpenRouterProvider:
+class OpenRouterProvider(Provider):
     def __init__(self):
         self._client = AsyncOpenAI(
             base_url="https://openrouter.ai/api/v1",
