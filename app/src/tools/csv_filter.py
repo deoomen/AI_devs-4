@@ -1,22 +1,13 @@
 import csv
 import logging
 import re
-from pathlib import Path
 
 from src.config import get_workspace_path
 from src.domain.types import ToolType
 from .types import Tool, ToolDefinition, ToolResult
+from .workspace import safe_resolve
 
 logger = logging.getLogger(__name__)
-
-
-def _safe_path(relative: str) -> Path | None:
-    """Resolve path safely within workspace. Returns None if escape attempted."""
-    root = get_workspace_path()
-    resolved = (root / relative).resolve()
-    if not str(resolved).startswith(str(root)):
-        return None
-    return resolved
 
 
 def _transform_value(raw: str, transform: str | None) -> str:
@@ -83,7 +74,7 @@ async def _execute(arguments: dict) -> ToolResult:
     if not filters:
         return ToolResult(output="Missing filters", is_error=True)
 
-    safe_input = _safe_path(input_path)
+    safe_input = safe_resolve(input_path)
     if safe_input is None:
         return ToolResult(output="Input path escapes workspace", is_error=True)
     if not safe_input.exists():
@@ -119,7 +110,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     # Determine output path
     if output_path:
-        safe_output = _safe_path(output_path)
+        safe_output = safe_resolve(output_path)
         if safe_output is None:
             return ToolResult(output="Output path escapes workspace", is_error=True)
     else:

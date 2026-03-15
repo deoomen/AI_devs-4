@@ -1,19 +1,10 @@
 import logging
-from pathlib import Path
 
-from src.config import get_workspace_path
 from src.domain.types import ToolType
 from .types import Tool, ToolDefinition, ToolResult
+from .workspace import safe_resolve
 
 logger = logging.getLogger(__name__)
-
-
-def _safe_path(relative: str) -> Path | None:
-    root = get_workspace_path()
-    resolved = (root / relative).resolve()
-    if not str(resolved).startswith(str(root)):
-        return None
-    return resolved
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -21,7 +12,7 @@ async def _execute(arguments: dict) -> ToolResult:
     if not path:
         return ToolResult(output="Missing path", is_error=True)
 
-    safe = _safe_path(path)
+    safe = safe_resolve(path)
     if safe is None:
         return ToolResult(output="Path escapes workspace boundary", is_error=True)
     if not safe.exists():
