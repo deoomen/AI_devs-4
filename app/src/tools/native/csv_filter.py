@@ -4,7 +4,7 @@ import re
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import get_workspace_root, safe_resolve
+from ..workspace import FileOp, get_workspace_root, safe_resolve
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +73,9 @@ async def _execute(arguments: dict) -> ToolResult:
     if not filters:
         return ToolResult(output="Missing filters", is_error=True)
 
-    safe_input = safe_resolve(input_path)
+    safe_input = safe_resolve(input_path, FileOp.READ)
     if safe_input is None:
-        return ToolResult(output="Input path escapes workspace", is_error=True)
+        return ToolResult(output=f"Read denied: {input_path} (use inbox/, notes/, or outbox/)", is_error=True)
     if not safe_input.exists():
         return ToolResult(output=f"File not found: {input_path}", is_error=True)
 
@@ -109,11 +109,14 @@ async def _execute(arguments: dict) -> ToolResult:
 
     # Determine output path
     if output_path:
-        safe_output = safe_resolve(output_path)
+        safe_output = safe_resolve(output_path, FileOp.WRITE)
         if safe_output is None:
-            return ToolResult(output="Output path escapes workspace", is_error=True)
+            return ToolResult(output=f"Write denied: {output_path} (use notes/ or outbox/)", is_error=True)
     else:
-        safe_output = safe_input.with_name(f"{safe_input.stem}_filtered.csv")
+        # Default output to notes/ dir (writable) with _filtered suffix
+        root = get_workspace_root().resolve()
+        default_out = root / "notes" / f"{safe_input.stem}_filtered.csv"
+        safe_output = default_out
 
     safe_output.parent.mkdir(parents=True, exist_ok=True)
 

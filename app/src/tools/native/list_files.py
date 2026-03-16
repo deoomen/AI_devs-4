@@ -2,16 +2,16 @@ import logging
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import safe_resolve
+from ..workspace import FileOp, safe_resolve
 
 logger = logging.getLogger(__name__)
 
 
 async def _execute(arguments: dict) -> ToolResult:
     path = arguments.get("path", ".")
-    safe = safe_resolve(path)
+    safe = safe_resolve(path, FileOp.READ)
     if safe is None:
-        return ToolResult(output="Path escapes workspace boundary", is_error=True)
+        return ToolResult(output=f"Read denied: {path} (use inbox/, notes/, or outbox/)", is_error=True)
     if not safe.exists():
         return ToolResult(output=f"Directory not found: {path}", is_error=True)
     if not safe.is_dir():

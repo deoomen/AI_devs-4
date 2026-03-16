@@ -4,7 +4,7 @@ import httpx
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import safe_resolve
+from ..workspace import FileOp, safe_resolve
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ async def _execute(arguments: dict) -> ToolResult:
     if not path:
         return ToolResult(output="Missing path", is_error=True)
 
-    safe = safe_resolve(path)
+    safe = safe_resolve(path, FileOp.WRITE)
     if safe is None:
-        return ToolResult(output="Path escapes workspace boundary", is_error=True)
+        return ToolResult(output=f"Write denied: {path} (use notes/ or outbox/)", is_error=True)
 
     timeout = arguments.get("timeout", DEFAULT_TIMEOUT)
 
