@@ -5,7 +5,7 @@ import logging
 from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
-from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall
+from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +67,19 @@ class OpenRouterProvider(Provider):
                     arguments=args,
                 ))
 
+        usage = None
+        if response.usage:
+            usage = ProviderUsage(
+                input_tokens=response.usage.prompt_tokens or 0,
+                output_tokens=response.usage.completion_tokens or 0,
+                total_tokens=response.usage.total_tokens or 0,
+            )
+
         return ProviderResponse(
             content=choice.message.content,
             tool_calls=tool_calls,
             finish_reason=choice.finish_reason or "stop",
+            usage=usage,
         )
 
     async def _call_with_retry(self, kwargs: dict):

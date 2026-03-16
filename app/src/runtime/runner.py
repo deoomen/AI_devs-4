@@ -13,7 +13,7 @@ from src.domain.agent import (
 from src.domain.item import Item
 from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
 from src.events.types import Event
-from src.providers.types import ProviderMessage
+from src.providers.types import ProviderMessage, estimate_tokens
 from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext
 
@@ -77,11 +77,21 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
             data={"turn": agent.turn_count, "items": len(items)},
         ))
 
+        estimated = estimate_tokens(messages, tool_defs or None)
+        logger.info("Token estimate: ~%d tokens (turn %d)", estimated, agent.turn_count)
+
         response = await ctx.provider.chat(
             model=agent.config.model,
             messages=messages,
             tools=tool_defs or None,
         )
+
+        if response.usage:
+            logger.info(
+                "Actual usage: in=%d out=%d total=%d cached=%s",
+                response.usage.input_tokens, response.usage.output_tokens,
+                response.usage.total_tokens, response.usage.cached_tokens,
+            )
 
         # Store assistant text if present
         if response.content:
