@@ -1,13 +1,14 @@
-"""Run an agent without the HTTP server."""
+"""Standalone agent runtime — no HTTP server needed.
+
+Not meant to be run directly — use `python main.py run` or import StandaloneAgent.
+"""
 
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 from src.config import settings
-from src.db.engine import async_session_factory, engine
-from src.db.models import Base
-from src.db.seed import seed_default_user
+from src.db.engine import async_session_factory
 from src.domain.agent import Agent, WaitEntry
 from src.domain.item import Item
 from src.domain.session import Session
@@ -21,15 +22,6 @@ from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
-from src.log import setup_logging
-
-setup_logging(settings.log_level)
-
-
-async def _ensure_db() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await seed_default_user()
 
 
 def _extract_last_assistant_text(items: list[Item]) -> str | None:
@@ -59,8 +51,6 @@ class StandaloneAgent:
         self._events.on("*", log_event)
 
     async def send(self, message: str) -> AgentResult:
-        await _ensure_db()
-
         async with async_session_factory() as db:
             repos = create_repositories(db)
             ctx = RuntimeContext(
@@ -80,8 +70,6 @@ class StandaloneAgent:
         """Deliver an answer to a waiting agent (e.g. ask_user response)."""
         if self._agent_id is None:
             raise ValueError("No agent to deliver to")
-
-        await _ensure_db()
 
         async with async_session_factory() as db:
             repos = create_repositories(db)
@@ -120,7 +108,6 @@ class StandaloneAgent:
         session = Session(id=str(uuid.uuid4()), user_id="standalone")
         await ctx.repos.sessions.create(session)
 
-        # Create session workspace
         ws = SessionWorkspace(session.id)
         ws.setup()
 
@@ -176,10 +163,3 @@ class StandaloneAgent:
             output=_extract_last_assistant_text(items),
             waiting_for=agent.waiting_for if agent.waiting_for else None,
         )
-
-
-async def run_agent_standalone(agent_name: str, user_message: str) -> str | None:
-    """Convenience: run a single-turn agent. Returns the last assistant text."""
-    agent = StandaloneAgent(agent_name)
-    result = await agent.send(user_message)
-    return result.output

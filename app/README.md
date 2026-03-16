@@ -61,57 +61,53 @@ pip install -r requirements.txt
 
 ## Running
 
-### API Server
+All commands from the `app/` directory:
 
 ```bash
-# From project root
 cd app
-python -m src.entry.server
 
-# Or with uvicorn directly
-uvicorn src.entry.server:app --host 0.0.0.0 --port 8000 --reload
+# Start the HTTP API server (default: 0.0.0.0:8000)
+python main.py server
+python main.py server --host 127.0.0.1 -p 3000
+
+# Run an agent one-shot (uses default agent from settings)
+python main.py run "What is 2 + 2?"
+python main.py run -a bob "Hello"
 ```
 
-### Standalone Runtime (no HTTP server)
+If the agent calls `ask_user`, the CLI will prompt for input interactively.
+
+### Programmatic Usage
 
 ```python
 import asyncio
+from src.domain.types import AgentStatus
+from src.entry import init_db, init_logging
 from src.entry.standalone import StandaloneAgent
+from loguru import logger
 
 async def main():
+    init_logging()
+    await init_db()
+
     agent = StandaloneAgent("alice")
+    
+    # Single-turn:
     result = await agent.send("What is 2 + 2?")
-    print(result.output)
+    logger.info("Agent response (status={}): {}", result.status, result.output)
 
     # Multi-turn: send follow-up to the same agent
     result = await agent.send("Now multiply that by 10")
-    print(result.output)
+
+    while result.status == AgentStatus.WAITING and result.waiting_for:
+        for wait in result.waiting_for:
+            logger.info("Agent asks: {}", result.output)
+            answer = input(f"[{wait.tool_name}] Your answer: ")
+            result = await agent.deliver(wait.call_id, answer)
+    else:
+        logger.info("Agent finished (status={}): {}", result.status, result.output)
 
 asyncio.run(main())
-```
-
-If the agent calls `ask_user` (human-in-the-loop), it pauses and returns `status=WAITING`:
-
-```python
-async def interactive():
-    agent = StandaloneAgent("alice")
-    result = await agent.send("Ask me something first")
-
-    if result.status.value == "waiting":
-        wait = result.waiting_for[0]
-        print(f"Agent asks: {result.output}")
-        answer = input("> ")
-        result = await agent.deliver(wait.call_id, answer)
-
-    print(result.output)
-```
-
-One-shot convenience:
-
-```python
-from src.entry.standalone import run_agent_standalone
-
-output = await run_agent_standalone("alice", "Hello!")
 ```
 
 ## API Endpoints

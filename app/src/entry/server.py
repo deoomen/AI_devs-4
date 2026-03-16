@@ -1,6 +1,11 @@
+"""FastAPI application definition.
+
+Not meant to be run directly — use `python main.py server`.
+Can also be loaded by uvicorn: `uvicorn src.entry.server:app`.
+"""
+
 from contextlib import asynccontextmanager
 
-import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -11,9 +16,6 @@ from src.db.engine import engine
 from src.db.models import Base
 from src.db.seed import seed_default_user
 from src.errors import AppError, error_envelope
-from src.log import setup_logging
-
-setup_logging(settings.log_level)
 
 
 @asynccontextmanager
@@ -35,7 +37,3 @@ app.include_router(chat.router)
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
     return JSONResponse(status_code=exc.status_code, content=error_envelope(exc))
-
-
-if __name__ == "__main__":
-    uvicorn.run("src.entry.server:app", host="0.0.0.0", port=8000, reload=settings.debug)
