@@ -7,11 +7,11 @@ from src.domain.agent import AgentConfig
 
 logger = logging.getLogger(__name__)
 
-WORKSPACE_DIR = Path(__file__).resolve().parent.parent.parent / "workspace" / "agents"
+AGENTS_DEFINITIONS_DIR = Path(__file__).resolve() / "agents"
 
 
 def load_agent_config(name: str) -> AgentConfig | None:
-    path = WORKSPACE_DIR / f"{name}.agent.md"
+    path = AGENTS_DEFINITIONS_DIR / f"{name}.agent.md"
     if not path.exists():
         logger.warning("Agent file not found: %s", path)
         return None

@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     agent_rate_limit_rpm: int = 30
 
     # Workspace
-    agent_workspace_dir: str = "workspace/sandbox"
+    agent_workspace_dir: str = "workspace"
 
     # Template variable whitelist — maps {{PLACEHOLDER}} names to setting field names.
     # Only listed keys are resolved in user messages.
