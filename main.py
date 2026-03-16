@@ -29,4 +29,7 @@ async def main() -> None:
         exit(1)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logging.info("Interrupted by user, shutting down.")
