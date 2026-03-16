@@ -7,12 +7,12 @@ All modules should use:  ``from loguru import logger``
 import logging
 import re
 import sys
-from pathlib import Path
 
 from loguru import logger
 
-_APP_DIR = Path(__file__).resolve().parent.parent
-_LOG_DIR = _APP_DIR / "logs"
+from src.config import ROOT_DIR
+
+_LOG_DIR = ROOT_DIR / "logs"
 
 # ---------------------------------------------------------------------------
 # Sensitive-key redaction

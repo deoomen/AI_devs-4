@@ -1,11 +1,10 @@
-from pathlib import Path
-
 import yaml
 from loguru import logger
 
+from src.config import ROOT_DIR
 from src.domain.agent import AgentConfig
 
-AGENTS_DEFINITIONS_DIR = Path(__file__).resolve().parent / "agents"
+AGENTS_DEFINITIONS_DIR = ROOT_DIR / "src" / "workspace" / "agents"
 
 
 def load_agent_config(name: str) -> AgentConfig | None:
