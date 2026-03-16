@@ -80,11 +80,13 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
         estimated = estimate_tokens(messages, tool_defs or None)
         logger.info("Token estimate: ~%d tokens (turn %d)", estimated, agent.turn_count)
 
+        logger.info("Sending messages: role=%s | content=%s", messages[-1].role, messages[-1].content)
         response = await ctx.provider.chat(
             model=agent.config.model,
             messages=messages,
             tools=tool_defs or None,
         )
+        logger.info("Received response: finish_reason=%s | content=%s", response.finish_reason, response.content)
 
         if response.usage:
             logger.info(
