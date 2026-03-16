@@ -1,10 +1,8 @@
-import logging
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
-
-logger = logging.getLogger(__name__)
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -21,7 +19,7 @@ async def _execute(arguments: dict) -> ToolResult:
         return ToolResult(output=f"Not a file: {path}", is_error=True)
 
     content = safe.read_text(encoding="utf-8")
-    logger.debug("read_file %s (%d bytes)", path, len(content))
+    logger.debug("read_file {} ({} bytes)", path, len(content))
     return ToolResult(output=content)
 
 

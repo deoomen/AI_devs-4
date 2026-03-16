@@ -1,12 +1,9 @@
-import logging
-
 import httpx
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 60.0
 
@@ -26,7 +23,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     timeout = arguments.get("timeout", DEFAULT_TIMEOUT)
 
-    logger.info("download_file %s → %s", url, path)
+    logger.info("download_file {} → {}", url, path)
 
     try:
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
@@ -49,7 +46,7 @@ async def _execute(arguments: dict) -> ToolResult:
     line_count = response.text.count("\n")
 
     summary = f"Saved to {path} ({size} bytes, ~{line_count} lines)"
-    logger.info("download_file done: %s", summary)
+    logger.info("download_file done: {}", summary)
     return ToolResult(output=summary)
 
 

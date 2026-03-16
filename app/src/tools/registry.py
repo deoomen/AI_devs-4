@@ -1,9 +1,7 @@
-import logging
+from loguru import logger
 
 from src.domain.types import ToolType
 from .types import Tool, ToolResult
-
-logger = logging.getLogger(__name__)
 
 
 class ToolRegistry:
@@ -35,7 +33,7 @@ class ToolRegistry:
 
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
-        logger.info("Registered tool: %s (type=%s)", tool.name, tool.type)
+        logger.info("Registered tool: {} (type={})", tool.name, tool.type)
 
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)

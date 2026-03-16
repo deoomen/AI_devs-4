@@ -4,13 +4,12 @@ Secrets are resolved ONLY in tool arguments right before execution — never in
 messages stored in the DB or sent to the LLM.
 """
 
-import logging
 import re
 from typing import Any
 
-from src.config import settings
+from loguru import logger
 
-logger = logging.getLogger(__name__)
+from src.config import settings
 
 _PATTERN = re.compile(r"\{\{(\w+)\}\}")
 
@@ -22,7 +21,7 @@ def _resolve_string(text: str) -> str:
         key = match.group(1)
         value = template_vars.get(key)
         if value is None:
-            logger.warning("Unresolved template variable: {{%s}} — not in whitelist", key)
+            logger.warning("Unresolved template variable: {{{{{key}}}}} — not in whitelist", key=key)
             return match.group(0)
         return value
 

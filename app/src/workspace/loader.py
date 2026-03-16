@@ -1,11 +1,9 @@
-import logging
 from pathlib import Path
 
 import yaml
+from loguru import logger
 
 from src.domain.agent import AgentConfig
-
-logger = logging.getLogger(__name__)
 
 AGENTS_DEFINITIONS_DIR = Path(__file__).resolve().parent / "agents"
 
@@ -13,17 +11,17 @@ AGENTS_DEFINITIONS_DIR = Path(__file__).resolve().parent / "agents"
 def load_agent_config(name: str) -> AgentConfig | None:
     path = AGENTS_DEFINITIONS_DIR / f"{name}.agent.md"
     if not path.exists():
-        logger.warning("Agent file not found: %s", path)
+        logger.warning("Agent file not found: {}", path)
         return None
 
     text = path.read_text()
     if not text.startswith("---"):
-        logger.warning("Agent file missing YAML frontmatter: %s", path)
+        logger.warning("Agent file missing YAML frontmatter: {}", path)
         return None
 
     parts = text.split("---", 2)
     if len(parts) < 3:
-        logger.warning("Agent file malformed frontmatter: %s", path)
+        logger.warning("Agent file malformed frontmatter: {}", path)
         return None
 
     frontmatter = yaml.safe_load(parts[1])

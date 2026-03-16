@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     app_name: str = "ai-agent"
     debug: bool = False
+    log_level: str = "INFO"
 
     # Auth
     api_key: str = "change-me"

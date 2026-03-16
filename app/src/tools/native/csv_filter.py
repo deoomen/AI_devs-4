@@ -1,12 +1,11 @@
 import csv
-import logging
 import re
+
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, get_workspace_root, safe_resolve
-
-logger = logging.getLogger(__name__)
 
 
 def _transform_value(raw: str, transform: str | None) -> str:
@@ -142,7 +141,7 @@ async def _execute(arguments: dict) -> ToolResult:
         + "\n".join(preview_lines)
     )
 
-    logger.info("csv_filter: %d/%d rows, saved to %s", len(filtered), total, rel_output)
+    logger.info("csv_filter: {}/{} rows, saved to {}", len(filtered), total, rel_output)
     return ToolResult(output=summary)
 
 

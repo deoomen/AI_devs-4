@@ -22,6 +22,9 @@ from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
+from src.log import setup_logging
+
+setup_logging(settings.log_level)
 
 
 async def _ensure_db() -> None:

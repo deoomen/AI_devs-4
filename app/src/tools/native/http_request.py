@@ -1,12 +1,10 @@
 import json
-import logging
 
 import httpx
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-
-logger = logging.getLogger(__name__)
 
 ALLOWED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 DEFAULT_TIMEOUT = 30.0
@@ -24,7 +22,7 @@ async def _execute(arguments: dict) -> ToolResult:
     if not url:
         return ToolResult(output="Missing url", is_error=True)
 
-    logger.debug("http_request %s %s", method, url)
+    logger.debug("http_request {} {}", method, url)
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -45,7 +43,7 @@ async def _execute(arguments: dict) -> ToolResult:
         body_str = response.text
 
     output = f"HTTP {response.status_code}\n{body_str}"
-    logger.debug("http_request response: %d (%d bytes)", response.status_code, len(body_str))
+    logger.debug("http_request response: {} ({} bytes)", response.status_code, len(body_str))
 
     return ToolResult(output=output, is_error=response.status_code >= 400)
 

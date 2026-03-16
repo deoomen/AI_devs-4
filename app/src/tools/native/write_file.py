@@ -1,10 +1,8 @@
-import logging
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
-
-logger = logging.getLogger(__name__)
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -20,7 +18,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     safe.parent.mkdir(parents=True, exist_ok=True)
     safe.write_text(content, encoding="utf-8")
-    logger.debug("write_file %s (%d bytes)", path, len(content))
+    logger.debug("write_file {} ({} bytes)", path, len(content))
     return ToolResult(output=f"Written {len(content)} bytes to {path}")
 
 

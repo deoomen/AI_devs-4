@@ -1,10 +1,8 @@
-import logging
+from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
-
-logger = logging.getLogger(__name__)
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -23,7 +21,7 @@ async def _execute(arguments: dict) -> ToolResult:
         prefix = "d" if entry.is_dir() else "f"
         lines.append(f"{prefix} {entry.name}")
 
-    logger.debug("list_files %s (%d entries)", path, len(lines))
+    logger.debug("list_files {} ({} entries)", path, len(lines))
     return ToolResult(output="\n".join(lines) if lines else "(empty)")
 
 

@@ -17,13 +17,12 @@ Principles:
     Promotion:     user explicitly moves artifacts to /shared.
 """
 
-import logging
 from datetime import date
 from pathlib import Path
 
-from src.config import get_workspace_path
+from loguru import logger
 
-logger = logging.getLogger(__name__)
+from src.config import get_workspace_path
 
 
 class SessionWorkspace:
@@ -42,7 +41,7 @@ class SessionWorkspace:
         plan = self.root / "plan.md"
         if not plan.exists():
             plan.write_text("", encoding="utf-8")
-        logger.info("Session workspace created: %s", self.root)
+        logger.info("Session workspace created: {}", self.root)
 
     def create_agent_dir(self, agent_id: str) -> Path:
         """Create agent subdirectory with inbox/notes/outbox. Returns agent root."""
@@ -50,7 +49,7 @@ class SessionWorkspace:
         agent_dir = self.root / "agents" / f"agnt_{short_id}"
         for sub in ("inbox", "notes", "outbox"):
             (agent_dir / sub).mkdir(parents=True, exist_ok=True)
-        logger.info("Agent workspace created: %s", agent_dir)
+        logger.info("Agent workspace created: {}", agent_dir)
         return agent_dir
 
     def agent_dir(self, agent_id: str) -> Path:

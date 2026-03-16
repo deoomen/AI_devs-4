@@ -1,9 +1,9 @@
-import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from loguru import logger
 
 from src.api.routes import chat, health
 from src.config import settings
@@ -11,12 +11,9 @@ from src.db.engine import engine
 from src.db.models import Base
 from src.db.seed import seed_default_user
 from src.errors import AppError, error_envelope
+from src.log import setup_logging
 
-logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
-    format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
-)
-logger = logging.getLogger(__name__)
+setup_logging(settings.log_level)
 
 
 @asynccontextmanager
@@ -25,7 +22,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await seed_default_user()
-    logger.info("App ready — %s", settings.app_name)
+    logger.info("App ready — {}", settings.app_name)
     yield
     await engine.dispose()
 

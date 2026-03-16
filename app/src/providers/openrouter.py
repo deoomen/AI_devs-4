@@ -1,13 +1,11 @@
 import asyncio
 import json
-import logging
 
+from loguru import logger
 from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
 from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
-
-logger = logging.getLogger(__name__)
 
 class OpenRouterProvider(Provider):
     def __init__(self):
@@ -47,7 +45,7 @@ class OpenRouterProvider(Provider):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
-        logger.info("LLM request: model=%s messages=%d tools=%d", model, len(openai_messages), len(tools or []))
+        logger.info("LLM request: model={} messages={} tools={}", model, len(openai_messages), len(tools or []))
 
         response, headers = await self._call_with_retry(kwargs)
         _log_rate_limits(headers, kwargs["model"])
@@ -92,7 +90,7 @@ class OpenRouterProvider(Provider):
                 if attempt == settings.provider_max_retries - 1:
                     raise
                 logger.warning(
-                    "Provider rate limited (attempt %d/%d), retrying in %.1fs",
+                    "Provider rate limited (attempt {}/{}), retrying in {:.1f}s",
                     attempt + 1, settings.provider_max_retries, retry_after,
                 )
                 await asyncio.sleep(retry_after)
@@ -111,7 +109,7 @@ _RATE_LIMIT_HEADERS = [
 def _log_rate_limits(headers, model: str) -> None:
     limits = {h: headers.get(h) for h in _RATE_LIMIT_HEADERS if headers.get(h)}
     if limits:
-        logger.info("Provider rate limits [%s]: %s", model, limits)
+        logger.info("Provider rate limits [{}]: {}", model, limits)
 
 
 def _parse_reset_seconds(value: str) -> float | None:
@@ -141,7 +139,7 @@ async def _wait_if_rate_limited(headers, model: str) -> None:
         wait_seconds = _parse_reset_seconds(reset)
         if wait_seconds and wait_seconds > 0:
             logger.info(
-                "Rate limit reached for [%s], waiting %.1fs before next call",
+                "Rate limit reached for [{}], waiting {:.1f}s before next call",
                 model, wait_seconds,
             )
             await asyncio.sleep(wait_seconds)

@@ -1,14 +1,12 @@
 import asyncio
 import json
-import logging
 
 import httpx
+from loguru import logger
 
 from src.config import settings
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 30.0
 
@@ -28,7 +26,7 @@ async def _execute(arguments: dict) -> ToolResult:
         "answer": answer,
     }
 
-    logger.info("headquarters %s task=%s", endpoint, task)
+    logger.info("headquarters {} task={}", endpoint, task)
 
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
@@ -45,14 +43,14 @@ async def _execute(arguments: dict) -> ToolResult:
         result = {}
         body_str = response.text
 
-    logger.info("headquarters response: %d %s", response.status_code, body_str[:200])
+    logger.info("headquarters response: {} {}", response.status_code, body_str[:200])
 
     # Respect retry_after from response body on 429
     if response.status_code == 429 and isinstance(result, dict):
         retry_after = result.get("retry_after")
         if retry_after:
             wait = int(retry_after) + 1  # +1s safety margin
-            logger.info("Headquarters rate limited, waiting %ds before returning", wait)
+            logger.info("Headquarters rate limited, waiting {}s before returning", wait)
             await asyncio.sleep(wait)
             # Retry the same request after waiting
             try:
@@ -63,7 +61,7 @@ async def _execute(arguments: dict) -> ToolResult:
                     body_str = json.dumps(result, ensure_ascii=False)
                 except (json.JSONDecodeError, ValueError):
                     body_str = response.text
-                logger.info("headquarters retry response: %d %s", response.status_code, body_str[:200])
+                logger.info("headquarters retry response: {} {}", response.status_code, body_str[:200])
             except (httpx.TimeoutException, httpx.RequestError) as e:
                 return ToolResult(output=f"Retry failed: {e}", is_error=True)
 

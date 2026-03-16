@@ -1,5 +1,4 @@
 import json
-import logging
 import uuid
 
 from src.domain.agent import (
@@ -12,12 +11,12 @@ from src.domain.agent import (
 )
 from src.domain.item import Item
 from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
+from loguru import logger
+
 from src.events.types import Event
 from src.providers.types import ProviderMessage, estimate_tokens
 from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext
-
-logger = logging.getLogger(__name__)
 
 
 def _items_to_messages(items: list[Item], system_prompt: str) -> list[ProviderMessage]:
@@ -78,19 +77,19 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
         ))
 
         estimated = estimate_tokens(messages, tool_defs or None)
-        logger.info("Token estimate: ~%d tokens (turn %d)", estimated, agent.turn_count)
+        logger.info("Token estimate: ~{} tokens (turn {})", estimated, agent.turn_count)
 
-        logger.info("Sending messages: role=%s | content=%s", messages[-1].role, messages[-1].content)
+        logger.info("Sending messages: role={} | content={}", messages[-1].role, messages[-1].content)
         response = await ctx.provider.chat(
             model=agent.config.model,
             messages=messages,
             tools=tool_defs or None,
         )
-        logger.info("Received response: finish_reason=%s | content=%s", response.finish_reason, response.content)
+        logger.info("Received response: finish_reason={} | content={}", response.finish_reason, response.content)
 
         if response.usage:
             logger.info(
-                "Actual usage: in=%d out=%d total=%d cached=%s",
+                "Actual usage: in={} out={} total={} cached={}",
                 response.usage.input_tokens, response.usage.output_tokens,
                 response.usage.total_tokens, response.usage.cached_tokens,
             )
