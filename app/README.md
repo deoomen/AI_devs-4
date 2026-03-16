@@ -9,23 +9,38 @@ Agents are defined as markdown files with YAML frontmatter. They run in a loop �
 ```
 app/
 ├── alembic/                  # Database migrations (Alembic, async SQLite)
-├── docs/                     # Feature requests and design docs
 ├── src/                      # Application source code
 │   ├── api/                  # HTTP layer (schemas, dependency injection)
 │   │   └── routes/           # FastAPI route handlers (chat, health)
 │   ├── db/                   # Async SQLAlchemy engine, ORM models, seeding
 │   ├── domain/               # Core entities (Agent, Session, Item, User) and enums
-│   ├── events/               # Pub/sub event emitter and handlers
+│   ├── events/               # Pub/sub event emitter, handlers, event types
 │   ├── middleware/            # Auth (Bearer token) and per-user rate limiting
 │   ├── providers/            # LLM provider abstraction (OpenRouter / OpenAI-compatible)
 │   ├── repositories/         # Data access layer (CRUD for each entity)
-│   ├── runtime/              # Agent execution loop, standalone runner, template engine
-│   ├── tools/                # Tool registry, definitions, path safety
-│   │   └── native/           # Built-in tools (http_request, read/write_file, csv_filter, etc.)
-│   └── workspace/            # Agent config loader (YAML frontmatter .agent.md files)
-└── workspace/                # Runtime data (agent definitions, sandbox files)
-    └── agents/               # Agent definitions (YAML frontmatter + system prompt)
+│   ├── runtime/              # Agent execution loop, standalone runner, runtime context
+│   ├── tools/                # Tool registry, template resolution, workspace path safety
+│   │   └── native/           # Built-in tools (see Available Tools below)
+│   └── workspace/            # Agent config loader and session workspace management
+│       └── agents/           # Agent definitions (YAML frontmatter + system prompt)
+├── workspace/                # Runtime data (date-based session directories)
+├── config.py                 # Pydantic settings (loads .env)
+├── errors.py                 # Application error types
+└── log.py                    # Logging setup (loguru)
 ```
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `aidevs_headquarters` | Send reports to AIDevs headquarters API |
+| `ask_user` | Human-in-the-loop — pauses agent, waits for user input |
+| `csv_filter` | Filter and query CSV files |
+| `download_file` | Download files from URLs |
+| `http_request` | Make HTTP requests (GET, POST, etc.) |
+| `list_files` | List files in the agent workspace |
+| `read_file` | Read file contents from the agent workspace |
+| `write_file` | Write files to the agent workspace |
 
 ## Setup
 
@@ -104,7 +119,7 @@ All chat endpoints require `Authorization: Bearer <api_key>` header.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check → `{"status": "ok"}` |
+| `GET` | `/health` | Health check |
 | `POST` | `/api/chat/completions` | Create and run an agent |
 | `POST` | `/api/chat/agents/{agent_id}/deliver` | Resume a waiting agent with tool result |
 | `GET` | `/api/chat/agents/{agent_id}` | Poll agent status |
@@ -197,7 +212,7 @@ Add the tool name to the agent's `tools` list in its `.agent.md` file.
 
 ## Adding a New Agent
 
-Create `workspace/agents/myagent.agent.md`:
+Create `src/workspace/agents/myagent.agent.md`:
 
 ```yaml
 ---
@@ -234,6 +249,19 @@ agent = StandaloneAgent("myagent")
 result = await agent.send("Hello")
 ```
 
+## Template Variables
+
+Tool arguments support `{{PLACEHOLDER}}` syntax. Variables are resolved at execution time (never stored in DB or sent to LLM). Only whitelisted variables are resolved — configured via `template_whitelist` in settings.
+
+## Workspace & File Access
+
+Agents operate in isolated, session-scoped workspaces. File tools enforce directory-level access control:
+
+- **Write**: `notes/`, `outbox/` only
+- **Read**: `inbox/`, `notes/`, `outbox/` only
+
+This prevents agents from escaping their workspace or accessing other agents' data.
+
 ## Configuration
 
 Key settings in `.env`:
@@ -241,10 +269,15 @@ Key settings in `.env`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `debug` | `false` | Enable debug logging |
+| `log_level` | `INFO` | Log level (DEBUG, INFO, WARNING, ERROR) |
 | `api_key` | `change-me` | Bearer token for API auth |
 | `database_url` | `sqlite+aiosqlite:///./agent.db` | Database connection string |
 | `openrouter_api_key` | — | OpenRouter API key (required) |
 | `openrouter_default_model` | `openai/gpt-4.1-mini` | Default LLM model |
-| `agent_workspace_dir` | `workspace/sandbox` | Sandboxed file workspace |
+| `provider_max_retries` | `3` | Max retries for LLM provider calls |
+| `aidevs4_headquarters_api_key` | — | AIDevs headquarters API key |
+| `aidevs4_headquarters_url` | `***REMOVED***` | AIDevs headquarters URL |
+| `agent_default_name` | `alice` | Default agent when none specified |
+| `agent_workspace_dir` | `workspace` | Runtime workspace directory |
 | `agent_rate_limit_rpm` | `30` | Max requests per minute per user |
 | `agent_max_turns` | `10` | Default max LLM loop iterations |
