@@ -7,8 +7,12 @@ All modules should use:  ``from loguru import logger``
 import logging
 import re
 import sys
+from pathlib import Path
 
 from loguru import logger
+
+_APP_DIR = Path(__file__).resolve().parent.parent
+_LOG_DIR = _APP_DIR / "logs"
 
 # ---------------------------------------------------------------------------
 # Sensitive-key redaction
@@ -61,7 +65,7 @@ class _InterceptHandler(logging.Handler):
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
-LOG_FORMAT = (
+CONSOLE_FORMAT = (
     "<green>{time:YYYY-MM-DDTHH:mm:ss.SSSZ}</green> | "
     "<level>{level: <8}</level> | "
     "<dim>pid:{process} tid:{thread}</dim> | "
@@ -70,15 +74,39 @@ LOG_FORMAT = (
     "{message}"
 )
 
+FILE_FORMAT = (
+    "{time:YYYY-MM-DDTHH:mm:ss.SSSZ} | "
+    "{level: <8} | "
+    "pid:{process} tid:{thread} | "
+    "{elapsed} | "
+    "{name}:{function}:{line} — "
+    "{message}"
+)
+
 
 def setup_logging(level: str = "INFO") -> None:
     """Configure loguru as the sole logging sink with redaction."""
     logger.remove()
+
+    # Console sink (colorized, redacted)
     logger.add(
         _sink,
         level=level.upper(),
-        format=LOG_FORMAT,
+        format=CONSOLE_FORMAT,
         colorize=True,
+    )
+
+    # File sink (plain text, redacted, rotating)
+    _LOG_DIR.mkdir(parents=True, exist_ok=True)
+    logger.add(
+        _LOG_DIR / "app.log",
+        level=level.upper(),
+        format=FILE_FORMAT,
+        rotation="10 MB",
+        retention="7 days",
+        compression="gz",
+        encoding="utf-8",
+        filter=lambda record: _redact_record(record),
     )
 
     # Redirect stdlib logging through loguru
@@ -87,3 +115,9 @@ def setup_logging(level: str = "INFO") -> None:
     # Quiet noisy third-party stdlib loggers
     for name in ("httpx", "httpcore", "hpack", "asyncio"):
         logging.getLogger(name).setLevel(logging.WARNING)
+
+
+def _redact_record(record) -> bool:
+    """Mutate the record message in-place for file sink redaction."""
+    record["message"] = _redact(record["message"])
+    return True
