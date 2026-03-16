@@ -7,7 +7,7 @@ from src.domain.agent import AgentConfig
 
 logger = logging.getLogger(__name__)
 
-AGENTS_DEFINITIONS_DIR = Path(__file__).resolve() / "agents"
+AGENTS_DEFINITIONS_DIR = Path(__file__).resolve().parent / "agents"
 
 
 def load_agent_config(name: str) -> AgentConfig | None:

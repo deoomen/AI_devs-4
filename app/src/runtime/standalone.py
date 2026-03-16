@@ -2,6 +2,7 @@
 
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 
 from src.config import settings
 from src.db.engine import async_session_factory, engine
@@ -20,6 +21,7 @@ from src.domain.agent import WaitEntry
 from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
+from src.workspace.session import SessionWorkspace
 
 
 async def _ensure_db() -> None:
@@ -92,6 +94,9 @@ class StandaloneAgent:
             if agent.status != AgentStatus.WAITING:
                 raise ValueError(f"Agent is not waiting (status={agent.status})")
 
+            if agent.workspace_path:
+                ctx.agent_workspace = Path(agent.workspace_path)
+
             agent = await deliver_result(ctx, agent, call_id, output)
             items = await repos.items.list_by_agent(agent.id)
             await db.commit()
@@ -113,14 +118,22 @@ class StandaloneAgent:
         session = Session(id=str(uuid.uuid4()), user_id="standalone")
         await ctx.repos.sessions.create(session)
 
+        # Create session workspace
+        ws = SessionWorkspace(session.id)
+        ws.setup()
+
+        agent_id = str(uuid.uuid4())
+        agent_ws = ws.create_agent_dir(agent_id)
         agent = Agent(
-            id=str(uuid.uuid4()),
+            id=agent_id,
             session_id=session.id,
             status=AgentStatus.PENDING,
             config=agent_config,
+            workspace_path=str(agent_ws),
         )
         await ctx.repos.agents.create(agent)
         self._agent_id = agent.id
+        ctx.agent_workspace = agent_ws
 
         await self._add_user_message(ctx, agent.id, message)
         return await self._run_and_collect(ctx, agent)
@@ -129,6 +142,9 @@ class StandaloneAgent:
         agent = await ctx.repos.agents.get(self._agent_id)
         if agent is None:
             raise ValueError(f"Agent '{self._agent_id}' not found in DB")
+
+        if agent.workspace_path:
+            ctx.agent_workspace = Path(agent.workspace_path)
 
         agent.status = AgentStatus.PENDING
         agent.turn_count = 0

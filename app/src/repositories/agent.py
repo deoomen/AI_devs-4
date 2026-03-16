@@ -26,6 +26,7 @@ def _agent_from_row(row: AgentRow) -> Agent:
         config=config,
         turn_count=row.turn_count,
         waiting_for=waiting,
+        workspace_path=row.workspace_path,
     )
 
 
@@ -46,6 +47,7 @@ def _agent_to_row_data(agent: Agent) -> dict:
         "config_json": json.dumps(config_data),
         "waiting_for_json": json.dumps(waiting_data),
         "turn_count": agent.turn_count,
+        "workspace_path": agent.workspace_path,
     }
 
 

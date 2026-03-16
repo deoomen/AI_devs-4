@@ -14,6 +14,7 @@ from src.domain.item import Item
 from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
 from src.events.types import Event
 from src.providers.types import ProviderMessage
+from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,9 @@ async def _store_item(ctx: RuntimeContext, agent_id: str, **kwargs) -> Item:
 
 async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
     """Main agent loop. Returns agent in COMPLETED or WAITING state."""
+    if ctx.agent_workspace:
+        set_workspace_root(ctx.agent_workspace)
+
     if agent.status == AgentStatus.PENDING:
         agent = start_agent(agent)
         await ctx.repos.agents.update(agent)

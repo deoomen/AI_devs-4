@@ -2,10 +2,9 @@ import csv
 import logging
 import re
 
-from src.config import get_workspace_path
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import safe_resolve
+from ..workspace import get_workspace_root, safe_resolve
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +124,7 @@ async def _execute(arguments: dict) -> ToolResult:
         writer.writerows(filtered)
 
     # Build preview
-    root = get_workspace_path()
+    root = get_workspace_root()
     rel_output = safe_output.relative_to(root)
 
     preview_data = filtered[:preview_rows]

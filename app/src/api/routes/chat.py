@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -14,6 +15,7 @@ from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
 from src.workspace.loader import load_agent_config
+from src.workspace.session import SessionWorkspace
 
 router = APIRouter(prefix="/api/chat")
 
@@ -36,14 +38,22 @@ async def completions(
     session = Session(id=str(uuid.uuid4()), user_id=user.id)
     await ctx.repos.sessions.create(session)
 
+    # Create session workspace
+    ws = SessionWorkspace(session.id)
+    ws.setup()
+
     # Create agent
+    agent_id = str(uuid.uuid4())
+    agent_ws = ws.create_agent_dir(agent_id)
     agent = Agent(
-        id=str(uuid.uuid4()),
+        id=agent_id,
         session_id=session.id,
         status=AgentStatus.PENDING,
         config=agent_config,
+        workspace_path=str(agent_ws),
     )
     await ctx.repos.agents.create(agent)
+    ctx.agent_workspace = agent_ws
 
     # Store user message
     user_item = Item(
@@ -102,6 +112,9 @@ async def deliver(
     if agent.status != AgentStatus.WAITING:
         err = AppError(message="Agent is not waiting for input", status_code=400, code=ErrorCode.NOT_WAITING)
         return JSONResponse(status_code=400, content=error_envelope(err))
+
+    if agent.workspace_path:
+        ctx.agent_workspace = Path(agent.workspace_path)
 
     try:
         agent = await deliver_result(ctx, agent, req.call_id, req.output)
