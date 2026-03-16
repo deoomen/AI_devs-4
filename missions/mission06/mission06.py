@@ -47,7 +47,7 @@ class Mission06(BaseMission):
 
     async def run(self) -> None:
         from src.domain.types import AgentStatus
-        from src.runtime.standalone import StandaloneAgent
+        from src.entry.standalone import StandaloneAgent
 
         agent = StandaloneAgent("alice")
         log.info("Starting categorize mission via agent")

@@ -18,7 +18,8 @@ app/
 │   ├── middleware/            # Auth (Bearer token) and per-user rate limiting
 │   ├── providers/            # LLM provider abstraction (OpenRouter / OpenAI-compatible)
 │   ├── repositories/         # Data access layer (CRUD for each entity)
-│   ├── runtime/              # Agent execution loop, standalone runner, runtime context
+│   ├── entry/                # Entry points (HTTP server, standalone runner)
+│   ├── runtime/              # Agent execution loop, runtime context
 │   ├── tools/                # Tool registry, template resolution, workspace path safety
 │   │   └── native/           # Built-in tools (see Available Tools below)
 │   └── workspace/            # Agent config loader and session workspace management
@@ -65,17 +66,17 @@ pip install -r requirements.txt
 ```bash
 # From project root
 cd app
-python -m src.main
+python -m src.entry.server
 
 # Or with uvicorn directly
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn src.entry.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Standalone Runtime (no HTTP server)
 
 ```python
 import asyncio
-from src.runtime.standalone import StandaloneAgent
+from src.entry.standalone import StandaloneAgent
 
 async def main():
     agent = StandaloneAgent("alice")
@@ -108,7 +109,7 @@ async def interactive():
 One-shot convenience:
 
 ```python
-from src.runtime.standalone import run_agent_standalone
+from src.entry.standalone import run_agent_standalone
 
 output = await run_agent_standalone("alice", "Hello!")
 ```

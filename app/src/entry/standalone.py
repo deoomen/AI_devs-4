@@ -8,7 +8,7 @@ from src.config import settings
 from src.db.engine import async_session_factory, engine
 from src.db.models import Base
 from src.db.seed import seed_default_user
-from src.domain.agent import Agent
+from src.domain.agent import Agent, WaitEntry
 from src.domain.item import Item
 from src.domain.session import Session
 from src.domain.types import AgentStatus, ItemType
@@ -17,7 +17,6 @@ from src.events.logger import log_event
 from src.providers.openrouter import OpenRouterProvider
 from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
-from src.domain.agent import WaitEntry
 from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
