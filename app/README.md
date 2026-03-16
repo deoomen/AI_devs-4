@@ -7,27 +7,28 @@ Agents are defined as markdown files with YAML frontmatter. They run in a loop �
 ## Project Structure
 
 ```
-app/
-├── alembic/                  # Database migrations (Alembic, async SQLite)
-├── src/                      # Application source code
-│   ├── api/                  # HTTP layer (schemas, dependency injection)
-│   │   └── routes/           # FastAPI route handlers (chat, health)
-│   ├── db/                   # Async SQLAlchemy engine, ORM models, seeding
-│   ├── domain/               # Core entities (Agent, Session, Item, User) and enums
-│   ├── events/               # Pub/sub event emitter, handlers, event types
-│   ├── middleware/            # Auth (Bearer token) and per-user rate limiting
-│   ├── providers/            # LLM provider abstraction (OpenRouter / OpenAI-compatible)
-│   ├── repositories/         # Data access layer (CRUD for each entity)
-│   ├── entry/                # Entry points (HTTP server, standalone runner)
-│   ├── runtime/              # Agent execution loop, runtime context
-│   ├── tools/                # Tool registry, template resolution, workspace path safety
-│   │   └── native/           # Built-in tools (see Available Tools below)
-│   └── workspace/            # Agent config loader and session workspace management
-│       └── agents/           # Agent definitions (YAML frontmatter + system prompt)
-├── workspace/                # Runtime data (date-based session directories)
-├── config.py                 # Pydantic settings (loads .env)
-├── errors.py                 # Application error types
-└── log.py                    # Logging setup (loguru)
+app/                    # Root directory
+├── alembic/            # Database migrations (Alembic, async SQLite)
+├── src/                # Application source code
+│   ├── api/            # HTTP layer (schemas, dependency injection)
+│   │   └── routes/     # FastAPI route handlers (chat, health)
+│   ├── db/             # Async SQLAlchemy engine, ORM models, seeding
+│   ├── domain/         # Core entities (Agent, Session, Item, User) and enums
+│   ├── entry/          # Entry points (HTTP server, standalone runner)
+│   ├── events/         # Pub/sub event emitter, handlers, event types
+│   ├── middleware/     # Auth (Bearer token) and per-user rate limiting
+│   ├── providers/      # LLM provider abstraction (OpenRouter / OpenAI-compatible)
+│   ├── repositories/   # Data access layer (CRUD for each entity)
+│   ├── runtime/        # Agent execution loop, runtime context
+│   ├── tools/          # Tool registry, template resolution, workspace path safety
+│   │   └── native/     # Built-in tools (see Available Tools below)
+│   ├── workspace/      # Agent config loader and session workspace management
+│   │   └── agents/     # Agent definitions (YAML frontmatter + system prompt)
+│   ├── workspace/      # Runtime data (date-based session directories)
+│   ├── config.py       # Pydantic settings (loads .env)
+│   ├── errors.py       # Application error types
+│   └── log.py          # Logging setup (loguru)
+└main.py                # CLI entry point (server, run agent one-shot)
 ```
 
 ## Available Tools
