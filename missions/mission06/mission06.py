@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import sys
 from pathlib import Path
 
@@ -6,8 +6,6 @@ from missions.base_mission import BaseMission
 
 # Add app/ to sys.path so we can import the agent runtime
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "app"))
-
-log = logging.getLogger(__name__)
 
 USER_MESSAGE = """\
 Complete the "categorize" mission. You must classify 10 items as dangerous (DNG) or neutral (NEU).
@@ -54,13 +52,13 @@ class Mission06(BaseMission):
         await init_db()
 
         agent = StandaloneAgent("alice")
-        log.info("Starting categorize mission via agent")
+        logger.info("Starting \"{}\" mission via agent", self.get_task_name())
         result = await agent.send(USER_MESSAGE)
 
         while result.status == AgentStatus.WAITING and result.waiting_for:
             for wait in result.waiting_for:
-                log.info("Agent asks: %s", result.output)
+                logger.info("Agent asks: {}", result.output)
                 answer = input(f"[{wait.tool_name}] Your answer: ")
                 result = await agent.deliver(wait.call_id, answer)
 
-        log.info("Agent finished (status=%s):\n%s", result.status, result.output)
+        logger.info("Agent finished (status={}):\n{}", result.status, result.output)
