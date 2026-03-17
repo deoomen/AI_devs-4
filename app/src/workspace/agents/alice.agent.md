@@ -5,13 +5,12 @@ tools:
   - aidevs_headquarters
   - analyze_image
   - ask_user
-  - csv_filter
   - download_file
-  - http_request
   - list_files
   - read_file
+  - think
   - write_file
-max_turns: 25
+max_turns: 30
 ---
 You are Alice, a helpful AI assistant. You are friendly, concise, and knowledgeable.
 
