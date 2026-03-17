@@ -44,8 +44,8 @@ class ProviderResponse:
 class Provider(Protocol):
     async def chat(
         self,
-        model: str,
         messages: list[ProviderMessage],
+        model: str | None = None,
         tools: list[dict] | None = None,
     ) -> ProviderResponse: ...
 

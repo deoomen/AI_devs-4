@@ -227,7 +227,7 @@ You are MyAgent. Describe personality and instructions here.
 This markdown body becomes the system prompt.
 ```
 
-- `model: ""` uses the default from `openrouter_default_model` setting
+- `model: ""` uses the default from `openrouter_default_chat_model` setting
 - `tools` lists which registered tools the agent can call
 - `max_turns` limits the LLM call loop iterations
 
@@ -271,7 +271,8 @@ Key settings in `.env`:
 | `api_key` | `change-me` | Bearer token for API auth |
 | `database_url` | `sqlite+aiosqlite:///./agent.db` | Database connection string |
 | `openrouter_api_key` | — | OpenRouter API key (required) |
-| `openrouter_default_model` | `openai/gpt-4.1-mini` | Default LLM model |
+| `openrouter_default_chat_model` | `openai/gpt-4.1-mini` | Default LLM chat model |
+| `openrouter_default_vision_model` | `google/gemini-3-flash-preview` | Default vision model |
 | `provider_max_retries` | `3` | Max retries for LLM provider calls |
 | `aidevs4_headquarters_api_key` | — | AIDevs headquarters API key |
 | `aidevs4_headquarters_url` | `***REMOVED***` | AIDevs headquarters URL |

@@ -3,7 +3,6 @@ import mimetypes
 
 from loguru import logger
 
-from src.config import settings
 from src.domain.types import ToolType
 from src.providers.openrouter import OpenRouterProvider
 from src.providers.types import ProviderMessage
@@ -50,7 +49,6 @@ async def _execute(arguments: dict) -> ToolResult:
 
     try:
         response = await provider.chat(
-            model=settings.openrouter_vision_model,
             messages=[message],
         )
     except Exception as e:

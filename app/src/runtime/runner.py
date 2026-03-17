@@ -81,8 +81,8 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
 
         logger.info("Sending messages: role={} | content={}", messages[-1].role, messages[-1].content)
         response = await ctx.provider.chat(
-            model=agent.config.model,
             messages=messages,
+            model=agent.config.model or None,
             tools=tool_defs or None,
         )
         logger.info("Received response: finish_reason={} | content={}", response.finish_reason, response.content)

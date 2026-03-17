@@ -8,6 +8,16 @@ from src.config import settings
 from .types import Content, Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
 
 
+def _has_image_content(messages: list[ProviderMessage]) -> bool:
+    """Check if any message contains image content parts."""
+    for msg in messages:
+        if isinstance(msg.content, list):
+            for part in msg.content:
+                if part.get("type") == "image_url":
+                    return True
+    return False
+
+
 def _serialize_content(content: Content | None) -> str | list[dict]:
     """Convert Content to OpenAI-compatible format.
 
@@ -28,10 +38,15 @@ class OpenRouterProvider(Provider):
 
     async def chat(
         self,
-        model: str,
         messages: list[ProviderMessage],
+        model: str | None = None,
         tools: list[dict] | None = None,
     ) -> ProviderResponse:
+        if not model:
+            if _has_image_content(messages):
+                model = settings.openrouter_default_vision_model
+            else:
+                model = settings.openrouter_default_chat_model
         openai_messages = []
         for msg in messages:
             if msg.tool_call_id:

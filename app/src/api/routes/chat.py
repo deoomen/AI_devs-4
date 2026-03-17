@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 
 from src.api.deps import check_rate_limit, get_runtime
 from src.api.schemas import AgentResponse, ChatRequest, DeliverRequest
-from src.config import settings
 from src.domain.agent import Agent, AgentConfig
 from src.domain.item import Item
 from src.domain.session import Session
@@ -30,9 +29,6 @@ async def completions(
     if agent_config is None:
         err = AppError(message=f"Agent '{req.agent}' not found", status_code=404, code=ErrorCode.AGENT_NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
-
-    if not agent_config.model:
-        agent_config.model = settings.openrouter_default_model
 
     # Create session
     session = Session(id=str(uuid.uuid4()), user_id=user.id)

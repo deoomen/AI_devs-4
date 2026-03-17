@@ -7,7 +7,6 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.config import settings
 from src.db.engine import async_session_factory
 from src.domain.agent import Agent, WaitEntry
 from src.domain.item import Item
@@ -102,9 +101,6 @@ class StandaloneAgent:
         agent_config = load_agent_config(self._agent_name)
         if agent_config is None:
             raise ValueError(f"Agent '{self._agent_name}' not found")
-        if not agent_config.model:
-            agent_config.model = settings.openrouter_default_model
-
         session = Session(id=str(uuid.uuid4()), user_id="standalone")
         await ctx.repos.sessions.create(session)
 
