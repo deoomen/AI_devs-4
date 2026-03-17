@@ -3,13 +3,12 @@ import mimetypes
 
 from loguru import logger
 
+from src.config import settings
 from src.domain.types import ToolType
 from src.providers.openrouter import OpenRouterProvider
 from src.providers.types import ProviderMessage
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
-
-VISION_MODEL = "google/gemini-3-flash-preview"
 
 
 def _image_to_data_uri(path_str: str) -> str | None:
@@ -51,7 +50,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     try:
         response = await provider.chat(
-            model=VISION_MODEL,
+            model=settings.openrouter_vision_model,
             messages=[message],
         )
     except Exception as e:

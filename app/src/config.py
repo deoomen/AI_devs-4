@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # Provider
     openrouter_api_key: str = ""
     openrouter_default_model: str = "openai/gpt-4.1-mini"
+    openrouter_vision_model: str = "google/gemini-3-flash-preview"
     provider_max_retries: int = 3
 
     # AIDevs Headquarters
