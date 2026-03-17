@@ -5,7 +5,19 @@ from loguru import logger
 from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
-from .types import Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
+from .types import Content, Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
+
+
+def _serialize_content(content: Content | None) -> str | list[dict]:
+    """Convert Content to OpenAI-compatible format.
+
+    Multimodal (list of parts) is passed through as-is;
+    plain strings are returned directly.
+    """
+    if isinstance(content, list):
+        return content
+    return content or ""
+
 
 class OpenRouterProvider(Provider):
     def __init__(self):
@@ -37,7 +49,7 @@ class OpenRouterProvider(Provider):
             else:
                 openai_messages.append({
                     "role": msg.role,
-                    "content": msg.content or "",
+                    "content": _serialize_content(msg.content),
                 })
 
         kwargs: dict = {"model": model, "messages": openai_messages}

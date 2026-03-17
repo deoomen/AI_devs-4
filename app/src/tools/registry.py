@@ -12,6 +12,7 @@ class ToolRegistry:
     def build_default(cls) -> "ToolRegistry":
         """Create a registry with all built-in tools."""
         from .native.aidevs_headquarters import aidevs_headquarters_tool
+        from .native.analyze_image import analyze_image_tool
         from .native.ask_user import ask_user_tool
         from .native.csv_filter import csv_filter_tool
         from .native.download_file import download_file_tool
@@ -22,6 +23,7 @@ class ToolRegistry:
 
         registry = cls()
         registry.register(aidevs_headquarters_tool)
+        registry.register(analyze_image_tool)
         registry.register(ask_user_tool)
         registry.register(csv_filter_tool)
         registry.register(download_file_tool)

@@ -3,6 +3,7 @@ name: alice
 model: ""
 tools:
   - aidevs_headquarters
+  - analyze_image
   - ask_user
   - csv_filter
   - download_file
