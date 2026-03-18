@@ -70,9 +70,9 @@ def _bind_log_context(session_id: str, agent_id: str, agent_name: str) -> None:
     })
 
 
-async def _store_entry(ctx: RuntimeContext, agent_id: str, **kwargs) -> Entry:
+async def _store_entry(ctx: RuntimeContext, agent_id: str, turn: int, **kwargs) -> Entry:
     seq = await ctx.repos.entries.next_sequence(agent_id)
-    entry = Entry(id=str(uuid.uuid4()), session_id=ctx.session_id, agent_id=agent_id, sequence=seq, **kwargs)
+    entry = Entry(id=str(uuid.uuid4()), session_id=ctx.session_id, agent_id=agent_id, turn=turn, sequence=seq, **kwargs)
     await ctx.repos.entries.create(entry)
     return entry
 
@@ -178,7 +178,7 @@ async def run_agent(
         # Store assistant text if present
         if response.content:
             await _store_entry(
-                ctx, agent.id,
+                ctx, agent.id, turn=agent.turn_count,
                 type=EntryType.MESSAGE,
                 role=Role.ASSISTANT,
                 content=response.content,
@@ -187,7 +187,7 @@ async def run_agent(
         # Store function calls
         for tc in response.tool_calls:
             await _store_entry(
-                ctx, agent.id,
+                ctx, agent.id, turn=agent.turn_count,
                 type=EntryType.FUNCTION_CALL,
                 role=Role.ASSISTANT,
                 call_id=tc.id,
@@ -201,7 +201,7 @@ async def run_agent(
             tool = ctx.tools.get(tc.name)
             if tool is None:
                 await _store_entry(
-                    ctx, agent.id,
+                    ctx, agent.id, turn=agent.turn_count,
                     type=EntryType.FUNCTION_CALL_OUTPUT,
                     role=Role.TOOL,
                     call_id=tc.id,
@@ -234,7 +234,7 @@ async def run_agent(
                 tool_duration_ms = int((time.time() - tool_start) * 1000)
 
                 await _store_entry(
-                    ctx, agent.id,
+                    ctx, agent.id, turn=agent.turn_count,
                     type=EntryType.FUNCTION_CALL_OUTPUT,
                     role=Role.TOOL,
                     call_id=tc.id,
@@ -293,7 +293,7 @@ async def run_agent(
 async def deliver_result(ctx: RuntimeContext, agent: Agent, call_id: str, output: str) -> Agent:
     """Deliver a tool result to a waiting agent, then resume the loop."""
     await _store_entry(
-        ctx, agent.id,
+        ctx, agent.id, turn=agent.turn_count,
         type=EntryType.FUNCTION_CALL_OUTPUT,
         role=Role.TOOL,
         call_id=call_id,

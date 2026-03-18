@@ -56,6 +56,7 @@ async def completions(
         id=str(uuid.uuid4()),
         session_id=ctx.session_id,
         agent_id=agent.id,
+        turn=0,
         sequence=0,
         type=EntryType.MESSAGE,
         role=Role.USER,

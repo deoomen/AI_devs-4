@@ -84,6 +84,7 @@ async def _execute(arguments: dict) -> ToolResult:
         id=str(uuid.uuid4()),
         session_id=ctx.session_id,
         agent_id=agent_id,
+        turn=0,
         sequence=seq,
         type=EntryType.MESSAGE,
         role=Role.USER,

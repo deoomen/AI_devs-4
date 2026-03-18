@@ -56,6 +56,7 @@ class EntryRow(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), nullable=False)
     agent_id: Mapped[str] = mapped_column(ForeignKey("agents.id"), nullable=False)
+    turn: Mapped[int] = mapped_column(Integer, nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     type: Mapped[str] = mapped_column(String(30), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)

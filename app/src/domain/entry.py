@@ -7,6 +7,7 @@ class Entry:
     id: str
     session_id: str
     agent_id: str
+    turn: int
     sequence: int
     type: EntryType
     role: Role

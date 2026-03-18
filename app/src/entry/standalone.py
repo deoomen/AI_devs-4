@@ -138,7 +138,7 @@ class StandaloneAgent:
         self._agent_id = agent.id
         ctx.agent_workspace = agent_ws
 
-        await self._add_user_message(ctx, agent.id, message)
+        await self._add_user_message(ctx, agent, message)
         return await self._run_and_collect(ctx, agent, user_input=message)
 
     async def _continue(self, ctx: RuntimeContext, message: str) -> AgentResult:
@@ -153,15 +153,16 @@ class StandaloneAgent:
         agent.turn_count = 0
         await ctx.repos.agents.update(agent)
 
-        await self._add_user_message(ctx, agent.id, message)
+        await self._add_user_message(ctx, agent, message)
         return await self._run_and_collect(ctx, agent, user_input=message)
 
-    async def _add_user_message(self, ctx: RuntimeContext, agent_id: str, message: str) -> None:
-        seq = await ctx.repos.entries.next_sequence(agent_id)
+    async def _add_user_message(self, ctx: RuntimeContext, agent: Agent, message: str) -> None:
+        seq = await ctx.repos.entries.next_sequence(agent.id)
         entry = Entry(
             id=str(uuid.uuid4()),
             session_id=ctx.session_id,
-            agent_id=agent_id,
+            agent_id=agent.id,
+            turn=agent.turn_count,
             sequence=seq,
             type=EntryType.MESSAGE,
             role=Role.USER,
