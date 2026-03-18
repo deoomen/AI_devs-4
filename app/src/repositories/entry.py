@@ -12,6 +12,7 @@ def _entry_from_row(row: EntryRow) -> Entry:
     arguments = json.loads(row.arguments_json) if row.arguments_json else None
     return Entry(
         id=row.id,
+        session_id=row.session_id,
         agent_id=row.agent_id,
         sequence=row.sequence,
         type=EntryType(row.type),
@@ -32,6 +33,7 @@ class EntryRepository:
     async def create(self, entry: Entry) -> Entry:
         row = EntryRow(
             id=entry.id,
+            session_id=entry.session_id,
             agent_id=entry.agent_id,
             sequence=entry.sequence,
             type=entry.type.value,

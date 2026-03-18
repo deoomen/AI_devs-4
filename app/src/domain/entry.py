@@ -5,6 +5,7 @@ from .types import EntryType, Role
 @dataclass
 class Entry:
     id: str
+    session_id: str
     agent_id: str
     sequence: int
     type: EntryType

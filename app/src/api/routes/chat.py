@@ -54,6 +54,7 @@ async def completions(
     # Store user message
     user_entry = Entry(
         id=str(uuid.uuid4()),
+        session_id=ctx.session_id,
         agent_id=agent.id,
         sequence=0,
         type=EntryType.MESSAGE,

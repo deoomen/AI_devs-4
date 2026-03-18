@@ -82,6 +82,7 @@ async def _execute(arguments: dict) -> ToolResult:
     seq = await ctx.repos.entries.next_sequence(agent_id)
     entry = Entry(
         id=str(uuid.uuid4()),
+        session_id=ctx.session_id,
         agent_id=agent_id,
         sequence=seq,
         type=EntryType.MESSAGE,

@@ -72,7 +72,7 @@ def _bind_log_context(session_id: str, agent_id: str, agent_name: str) -> None:
 
 async def _store_entry(ctx: RuntimeContext, agent_id: str, **kwargs) -> Entry:
     seq = await ctx.repos.entries.next_sequence(agent_id)
-    entry = Entry(id=str(uuid.uuid4()), agent_id=agent_id, sequence=seq, **kwargs)
+    entry = Entry(id=str(uuid.uuid4()), session_id=ctx.session_id, agent_id=agent_id, sequence=seq, **kwargs)
     await ctx.repos.entries.create(entry)
     return entry
 
