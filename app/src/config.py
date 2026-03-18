@@ -39,6 +39,7 @@ class Settings(BaseSettings):
 
     # Workspace
     agent_workspace_dir: str = "workspace"
+    agent_cleanup_child_workspace: bool = True
 
     # Langfuse tracing
     langfuse_public_key: str = ""

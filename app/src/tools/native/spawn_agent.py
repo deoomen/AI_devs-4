@@ -183,6 +183,11 @@ async def _execute(arguments: dict) -> ToolResult:
     if bridged_files:
         logger.info("Bridged {} file(s) from child outbox to parent inbox", len(bridged_files))
 
+    # Clean up child workspace after bridging is complete
+    if settings.agent_cleanup_child_workspace:
+        shutil.rmtree(child_workspace, ignore_errors=True)
+        logger.info("Cleaned up child workspace: {}", child_workspace)
+
     entries = await ctx.repos.entries.list_by_agent(agent.id)
     output = _extract_last_assistant_text(entries)
 
