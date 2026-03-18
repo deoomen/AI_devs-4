@@ -39,6 +39,7 @@ class ProviderResponse:
     tool_calls: list[ProviderToolCall] = field(default_factory=list)
     finish_reason: str = "stop"
     usage: ProviderUsage | None = None
+    model: str | None = None  # resolved model name (populated by provider)
 
 
 class Provider(Protocol):

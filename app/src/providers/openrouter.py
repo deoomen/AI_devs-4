@@ -105,6 +105,7 @@ class OpenRouterProvider(Provider):
             tool_calls=tool_calls,
             finish_reason=choice.finish_reason or "stop",
             usage=usage,
+            model=model,
         )
 
     async def _call_with_retry(self, kwargs: dict):

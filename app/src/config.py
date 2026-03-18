@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # Workspace
     agent_workspace_dir: str = "workspace"
 
+    # Langfuse tracing
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     # Template variable whitelist — maps {{PLACEHOLDER}} names to setting field names.
     # Only listed keys are resolved in user messages.
     template_whitelist: dict[str, str] = {

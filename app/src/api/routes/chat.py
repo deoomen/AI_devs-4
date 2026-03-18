@@ -64,7 +64,7 @@ async def completions(
 
     # Run agent
     try:
-        agent = await run_agent(ctx, agent)
+        agent = await run_agent(ctx, agent, user_id=user.id, user_input=req.input)
     except Exception as e:
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))

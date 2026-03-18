@@ -1,4 +1,5 @@
 import json
+import time
 import uuid
 
 from src.domain.agent import (
@@ -46,6 +47,19 @@ def _items_to_messages(items: list[Item], system_prompt: str) -> list[ProviderMe
     return messages
 
 
+def _messages_to_dicts(messages: list[ProviderMessage]) -> list[dict]:
+    """Serialize ProviderMessage list to plain dicts for event data / Langfuse input."""
+    result = []
+    for m in messages:
+        if m.tool_call_id:
+            result.append({"role": "tool", "tool_call_id": m.tool_call_id, "content": m.content or ""})
+        elif m.tool_calls:
+            result.append({"role": m.role, "content": m.content, "tool_calls": m.tool_calls})
+        else:
+            result.append({"role": m.role, "content": m.content or ""})
+    return result
+
+
 async def _store_item(ctx: RuntimeContext, agent_id: str, **kwargs) -> Item:
     seq = await ctx.repos.items.next_sequence(agent_id)
     item = Item(id=str(uuid.uuid4()), agent_id=agent_id, sequence=seq, **kwargs)
@@ -53,7 +67,12 @@ async def _store_item(ctx: RuntimeContext, agent_id: str, **kwargs) -> Item:
     return item
 
 
-async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
+async def run_agent(
+    ctx: RuntimeContext,
+    agent: Agent,
+    user_id: str = "",
+    user_input: str = "",
+) -> Agent:
     """Main agent loop. Returns agent in COMPLETED or WAITING state."""
     if ctx.agent_workspace:
         set_workspace_root(ctx.agent_workspace)
@@ -61,7 +80,17 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
     if agent.status == AgentStatus.PENDING:
         agent = start_agent(agent)
         await ctx.repos.agents.update(agent)
-        ctx.events.emit(Event(name="agent.started", agent_id=agent.id))
+        ctx.events.emit(Event(
+            name="agent.started",
+            agent_id=agent.id,
+            data={
+                "agent_name": agent.config.name,
+                "model": agent.config.model,
+                "session_id": agent.session_id,
+                "user_id": user_id,
+                "user_input": user_input,
+            },
+        ))
 
     tool_defs = ctx.tools.get_definitions(agent.config.tools or None)
     max_turns = agent.config.max_turns
@@ -79,12 +108,16 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
         estimated = estimate_tokens(messages, tool_defs or None)
         logger.info("Token estimate: ~{} tokens (turn {})", estimated, agent.turn_count)
 
+        # ── LLM call with timing ──────────────────────────────────────────────
         logger.info("Sending messages: role={} | content={}", messages[-1].role, messages[-1].content)
+        gen_start = time.time()
         response = await ctx.provider.chat(
             messages=messages,
             model=agent.config.model or None,
             tools=tool_defs or None,
         )
+        gen_duration_ms = int((time.time() - gen_start) * 1000)
+
         logger.info("Received response: finish_reason={} | content={}", response.finish_reason, response.content)
 
         if response.usage:
@@ -93,6 +126,25 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
                 response.usage.input_tokens, response.usage.output_tokens,
                 response.usage.total_tokens, response.usage.cached_tokens,
             )
+
+        ctx.events.emit(Event(
+            name="generation.completed",
+            agent_id=agent.id,
+            data={
+                "model": response.model,
+                "input": _messages_to_dicts(messages),
+                "output": response.content or "",
+                "usage": {
+                    "input_tokens": response.usage.input_tokens,
+                    "output_tokens": response.usage.output_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                } if response.usage else None,
+                "finish_reason": response.finish_reason,
+                "turn": agent.turn_count,
+                "start_time": gen_start,
+                "duration_ms": gen_duration_ms,
+            },
+        ))
 
         # Store assistant text if present
         if response.content:
@@ -140,7 +192,11 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
                     data={"call_id": tc.id, "tool": tc.name, "arguments": tc.arguments},
                 ))
             else:
+                # ── Tool call with timing ─────────────────────────────────────
+                tool_start = time.time()
                 result = await ctx.tools.execute(tc.name, tc.arguments)
+                tool_duration_ms = int((time.time() - tool_start) * 1000)
+
                 await _store_item(
                     ctx, agent.id,
                     type=ItemType.FUNCTION_CALL_OUTPUT,
@@ -150,9 +206,17 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
                     is_error=result.is_error,
                 )
                 ctx.events.emit(Event(
-                    name="tool.executed",
+                    name="tool.completed",
                     agent_id=agent.id,
-                    data={"call_id": tc.id, "tool": tc.name, "is_error": result.is_error},
+                    data={
+                        "name": tc.name,
+                        "call_id": tc.id,
+                        "arguments": tc.arguments,
+                        "output": result.output,
+                        "is_error": result.is_error,
+                        "start_time": tool_start,
+                        "duration_ms": tool_duration_ms,
+                    },
                 ))
 
         if human_waits:
@@ -174,7 +238,18 @@ async def run_agent(ctx: RuntimeContext, agent: Agent) -> Agent:
 
     agent = complete_agent(agent)
     await ctx.repos.agents.update(agent)
-    ctx.events.emit(Event(name="agent.completed", agent_id=agent.id))
+
+    # Collect final output for the trace
+    items = await ctx.repos.items.list_by_agent(agent.id)
+    last_text = next(
+        (i.content for i in reversed(items) if i.type == ItemType.MESSAGE and i.role == "assistant" and i.content),
+        None,
+    )
+    ctx.events.emit(Event(
+        name="agent.completed",
+        agent_id=agent.id,
+        data={"output": last_text},
+    ))
     return agent
 
 

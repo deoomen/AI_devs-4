@@ -21,6 +21,8 @@ from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
+from src.tracing.langfuse import flush_langfuse
+from src.tracing.subscriber import subscribe_langfuse
 
 
 def _extract_last_assistant_text(items: list[Item]) -> str | None:
@@ -48,6 +50,7 @@ class StandaloneAgent:
         self._provider = OpenRouterProvider()
         self._events = EventEmitter()
         self._events.on("*", log_event)
+        subscribe_langfuse(self._events)
 
     async def send(self, message: str) -> AgentResult:
         async with async_session_factory() as db:
@@ -63,6 +66,7 @@ class StandaloneAgent:
                 result = await self._continue(ctx, message)
 
             await db.commit()
+        flush_langfuse()
         return result
 
     async def deliver(self, call_id: str, output: str) -> AgentResult:
@@ -121,7 +125,7 @@ class StandaloneAgent:
         ctx.agent_workspace = agent_ws
 
         await self._add_user_message(ctx, agent.id, message)
-        return await self._run_and_collect(ctx, agent)
+        return await self._run_and_collect(ctx, agent, user_input=message)
 
     async def _continue(self, ctx: RuntimeContext, message: str) -> AgentResult:
         agent = await ctx.repos.agents.get(self._agent_id)
@@ -136,7 +140,7 @@ class StandaloneAgent:
         await ctx.repos.agents.update(agent)
 
         await self._add_user_message(ctx, agent.id, message)
-        return await self._run_and_collect(ctx, agent)
+        return await self._run_and_collect(ctx, agent, user_input=message)
 
     async def _add_user_message(self, ctx: RuntimeContext, agent_id: str, message: str) -> None:
         seq = await ctx.repos.items.next_sequence(agent_id)
@@ -150,8 +154,8 @@ class StandaloneAgent:
         )
         await ctx.repos.items.create(item)
 
-    async def _run_and_collect(self, ctx: RuntimeContext, agent: Agent) -> AgentResult:
-        agent = await run_agent(ctx, agent)
+    async def _run_and_collect(self, ctx: RuntimeContext, agent: Agent, user_input: str = "") -> AgentResult:
+        agent = await run_agent(ctx, agent, user_id="standalone", user_input=user_input)
         items = await ctx.repos.items.list_by_agent(agent.id)
         return AgentResult(
             agent_id=agent.id,
