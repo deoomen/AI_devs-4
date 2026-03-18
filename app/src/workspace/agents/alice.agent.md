@@ -3,13 +3,12 @@ name: alice
 model: ""
 tools:
   - aidevs_headquarters
-#  - analyze_image
   - ask_user
-  - csv_filter
+  - count_tokens
   - download_file
-  - http_request
   - list_files
   - read_file
+  - spawn_agent
   - think
   - write_file
 max_turns: 30
