@@ -102,7 +102,7 @@ def setup_logging(level: str = "INFO") -> None:
         _LOG_DIR / "app.log",
         level=level.upper(),
         format=FILE_FORMAT,
-        rotation="10 MB",
+        rotation="00:00",
         retention="7 days",
         compression="gz",
         encoding="utf-8",
