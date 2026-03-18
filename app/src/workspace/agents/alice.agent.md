@@ -1,7 +1,7 @@
 ---
 name: alice
 description: "General-purpose assistant — orchestrates tasks, communicates with external APIs"
-model: ""
+model: "google/gemini-3.1-pro-preview"
 tools:
   - aidevs_headquarters
   - ask_user

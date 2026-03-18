@@ -1,7 +1,7 @@
 ---
 name: bob
 description: "Research agent — analyzes documents, searches for information, and prepares result files"
-model: ""
+model: "openai/gpt-5-mini"
 tools:
   - download_file
   - list_files
