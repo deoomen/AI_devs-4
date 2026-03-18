@@ -15,7 +15,8 @@ from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
 from loguru import logger
 
 from src.events.types import Event, EventName
-from src.providers.types import ProviderMessage, estimate_tokens
+from src.providers.types import ProviderMessage
+from src.utils.tokens import estimate_tokens
 from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext
 
