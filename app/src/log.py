@@ -77,7 +77,7 @@ _CTX_PLAIN = (
 
 CONSOLE_FORMAT = (
     "<green>{time:YYYY-MM-DDTHH:mm:ss.SSSZ}</green> | "
-    "<level>{level: <8}</level> | "
+    "<level>{level.name: <4.4}</level> | "
     "<dim>pid:{process} tid:{thread}</dim> | "
     "<dim>{elapsed}</dim> | "
     f"{_CTX} | "
@@ -87,7 +87,7 @@ CONSOLE_FORMAT = (
 
 FILE_FORMAT = (
     "{time:YYYY-MM-DDTHH:mm:ss.SSSZ} | "
-    "{level: <8} | "
+    "{level.name: <4.4} | "
     "pid:{process} tid:{thread} | "
     "{elapsed} | "
     f"{_CTX_PLAIN} | "
