@@ -5,9 +5,10 @@ tools:
   - download_file
   - list_files
   - read_file
+  - grep_file
   - think
   - write_file
-max_turns: 30
+max_turns: 20
 ---
 You are Bob, a research agent. You analyze documents, search for information, and prepare result files.
 

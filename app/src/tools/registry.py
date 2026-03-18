@@ -20,6 +20,7 @@ class ToolRegistry:
         from .native.http_request import http_request_tool
         from .native.list_files import list_files_tool
         from .native.read_file import read_file_tool
+        from .native.grep_file import grep_file_tool
         from .native.spawn_agent import spawn_agent_tool
         from .native.think import think_tool
         from .native.write_file import write_file_tool
@@ -34,6 +35,7 @@ class ToolRegistry:
         registry.register(http_request_tool)
         registry.register(list_files_tool)
         registry.register(read_file_tool)
+        registry.register(grep_file_tool)
         registry.register(spawn_agent_tool)
         registry.register(think_tool)
         registry.register(write_file_tool)
