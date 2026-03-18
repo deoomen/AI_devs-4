@@ -31,11 +31,11 @@ async def completions(
         return JSONResponse(status_code=404, content=error_envelope(err))
 
     # Create session
-    session = Session(id=str(uuid.uuid4()), user_id=user.id)
+    session = Session(id=ctx.session_id, user_id=user.id)
     await ctx.repos.sessions.create(session)
 
     # Create session workspace
-    ws = SessionWorkspace(session.id)
+    ws = SessionWorkspace(ctx.session_id)
     ws.setup()
 
     # Create agent

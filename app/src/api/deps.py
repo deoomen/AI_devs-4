@@ -32,9 +32,11 @@ _event_emitter = _build_event_emitter()
 
 
 async def get_runtime() -> RuntimeContext:
+    import uuid
     async with async_session_factory() as db:
         repos = create_repositories(db)
         ctx = RuntimeContext(
+            session_id=str(uuid.uuid4()),
             repos=repos,
             provider=_provider,
             tools=_tool_registry,

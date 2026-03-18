@@ -18,7 +18,7 @@ from src.events.types import Event, EventName
 from src.providers.types import ProviderMessage
 from src.utils.tokens import estimate_tokens
 from src.tools.workspace import set_workspace_root
-from .context import RuntimeContext
+from .context import RuntimeContext, set_runtime_context
 
 
 def _items_to_messages(items: list[Item], system_prompt: str) -> list[ProviderMessage]:
@@ -75,6 +75,8 @@ async def run_agent(
     user_input: str = "",
 ) -> Agent:
     """Main agent loop. Returns agent in COMPLETED or WAITING state."""
+    ctx.agent_id = agent.id
+    set_runtime_context(ctx)
     if ctx.agent_workspace:
         set_workspace_root(ctx.agent_workspace)
 

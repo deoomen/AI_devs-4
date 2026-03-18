@@ -46,20 +46,30 @@ class StandaloneAgent:
 
     def __init__(self, agent_name: str):
         self._agent_name = agent_name
+        self._session_id = str(uuid.uuid4())
         self._agent_id: str | None = None
+        self._session_created = False
         self._tools = ToolRegistry.build_default()
         self._provider = OpenRouterProvider()
         self._events = EventEmitter()
         self._events.on(EventName.ALL, log_event)
         subscribe_langfuse(self._events)
 
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
+    def _build_ctx(self, repos) -> RuntimeContext:
+        return RuntimeContext(
+            session_id=self._session_id,
+            repos=repos, provider=self._provider,
+            tools=self._tools, events=self._events,
+        )
+
     async def send(self, message: str) -> AgentResult:
         async with async_session_factory() as db:
             repos = create_repositories(db)
-            ctx = RuntimeContext(
-                repos=repos, provider=self._provider,
-                tools=self._tools, events=self._events,
-            )
+            ctx = self._build_ctx(repos)
 
             if self._agent_id is None:
                 result = await self._create_and_run(ctx, message)
@@ -77,10 +87,7 @@ class StandaloneAgent:
 
         async with async_session_factory() as db:
             repos = create_repositories(db)
-            ctx = RuntimeContext(
-                repos=repos, provider=self._provider,
-                tools=self._tools, events=self._events,
-            )
+            ctx = self._build_ctx(repos)
 
             agent = await repos.agents.get(self._agent_id)
             if agent is None:
@@ -102,21 +109,27 @@ class StandaloneAgent:
             waiting_for=agent.waiting_for if agent.waiting_for else None,
         )
 
+    async def _ensure_session(self, ctx: RuntimeContext) -> None:
+        if not self._session_created:
+            session = Session(id=self._session_id, user_id="standalone")
+            await ctx.repos.sessions.create(session)
+            self._session_created = True
+
     async def _create_and_run(self, ctx: RuntimeContext, message: str) -> AgentResult:
         agent_config = load_agent_config(self._agent_name)
         if agent_config is None:
             raise ValueError(f"Agent '{self._agent_name}' not found")
-        session = Session(id=str(uuid.uuid4()), user_id="standalone")
-        await ctx.repos.sessions.create(session)
 
-        ws = SessionWorkspace(session.id)
+        await self._ensure_session(ctx)
+
+        ws = SessionWorkspace(self._session_id)
         ws.setup()
 
         agent_id = str(uuid.uuid4())
         agent_ws = ws.create_agent_dir(agent_id)
         agent = Agent(
             id=agent_id,
-            session_id=session.id,
+            session_id=self._session_id,
             status=AgentStatus.PENDING,
             config=agent_config,
             workspace_path=str(agent_ws),
