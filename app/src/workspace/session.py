@@ -58,6 +58,10 @@ class SessionWorkspace:
         return self.root / "agents" / f"agnt_{short_id}"
 
     @property
+    def agents_dir(self) -> Path:
+        return self.root / "agents"
+
+    @property
     def attachments(self) -> Path:
         return self.root / "attachments"
 
