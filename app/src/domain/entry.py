@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from .types import EntryType
+from .types import EntryType, Role
 
 
 @dataclass
@@ -8,7 +8,7 @@ class Entry:
     agent_id: str
     sequence: int
     type: EntryType
-    role: str | None = None
+    role: Role | None = None
     content: str | None = None
     call_id: str | None = None
     name: str | None = None

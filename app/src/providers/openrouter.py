@@ -5,6 +5,7 @@ from loguru import logger
 from openai import AsyncOpenAI, RateLimitError
 
 from src.config import settings
+from src.domain.types import Role
 from .types import Content, Provider, ProviderMessage, ProviderResponse, ProviderToolCall, ProviderUsage
 
 
@@ -51,7 +52,7 @@ class OpenRouterProvider(Provider):
         for msg in messages:
             if msg.tool_call_id:
                 openai_messages.append({
-                    "role": "tool",
+                    "role": Role.TOOL,
                     "tool_call_id": msg.tool_call_id,
                     "content": msg.content or "",
                 })

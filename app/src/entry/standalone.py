@@ -11,7 +11,7 @@ from src.db.engine import async_session_factory
 from src.domain.agent import Agent, WaitEntry
 from src.domain.entry import Entry
 from src.domain.session import Session
-from src.domain.types import AgentStatus, EntryType
+from src.domain.types import AgentStatus, EntryType, Role
 from src.events.emitter import EventEmitter
 from src.events.logger import log_event
 from src.events.types import EventName
@@ -28,7 +28,7 @@ from src.tracing.subscriber import subscribe_langfuse
 
 def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
     for entry in reversed(entries):
-        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+        if entry.type == EntryType.MESSAGE and entry.role == Role.ASSISTANT and entry.content:
             return entry.content
     return None
 
@@ -163,7 +163,7 @@ class StandaloneAgent:
             agent_id=agent_id,
             sequence=seq,
             type=EntryType.MESSAGE,
-            role="user",
+            role=Role.USER,
             content=message,
         )
         await ctx.repos.entries.create(entry)

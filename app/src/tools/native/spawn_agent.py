@@ -4,7 +4,7 @@ from loguru import logger
 
 from src.domain.agent import Agent
 from src.domain.entry import Entry
-from src.domain.types import AgentStatus, EntryType, ToolType
+from src.domain.types import AgentStatus, EntryType, Role, ToolType
 from src.runtime.context import get_runtime_context
 from src.tools.workspace import get_workspace_root
 from src.workspace.loader import list_agent_names, load_agent_config
@@ -37,7 +37,7 @@ def _build_description() -> str:
 
 def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
     for entry in reversed(entries):
-        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+        if entry.type == EntryType.MESSAGE and entry.role == Role.ASSISTANT and entry.content:
             return entry.content
     return None
 
@@ -85,7 +85,7 @@ async def _execute(arguments: dict) -> ToolResult:
         agent_id=agent_id,
         sequence=seq,
         type=EntryType.MESSAGE,
-        role="user",
+        role=Role.USER,
         content=message,
     )
     await ctx.repos.entries.create(entry)

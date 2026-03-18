@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import EntryRow
 from src.domain.entry import Entry
-from src.domain.types import EntryType
+from src.domain.types import EntryType, Role
 
 
 def _entry_from_row(row: EntryRow) -> Entry:
@@ -15,7 +15,7 @@ def _entry_from_row(row: EntryRow) -> Entry:
         agent_id=row.agent_id,
         sequence=row.sequence,
         type=EntryType(row.type),
-        role=row.role,
+        role=Role(row.role) if row.role else None,
         content=row.content,
         call_id=row.call_id,
         name=row.name,

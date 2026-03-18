@@ -20,6 +20,13 @@ class EntryType(StrEnum):
     FUNCTION_CALL_OUTPUT = "function_call_output"
 
 
+class Role(StrEnum):
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+    TOOL = "tool"
+
+
 class WaitType(StrEnum):
     TOOL_RESULT = "tool_result"
 

@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Protocol, TypeAlias
 
+from src.domain.types import Role
+
 # Content types — mirrors TS `Content = string | ContentPart[]`
 ContentPart: TypeAlias = dict  # {"type": "text", "text": "..."} | {"type": "image_url", "image_url": {"url": "..."}}
 Content: TypeAlias = str | list[ContentPart]
@@ -8,7 +10,7 @@ Content: TypeAlias = str | list[ContentPart]
 
 @dataclass
 class ProviderMessage:
-    role: str
+    role: Role
     content: Content | None = None
     tool_calls: list[dict] | None = None
     tool_call_id: str | None = None

@@ -3,7 +3,7 @@ import mimetypes
 
 from loguru import logger
 
-from src.domain.types import ToolType
+from src.domain.types import Role, ToolType
 from src.providers.openrouter import OpenRouterProvider
 from src.providers.types import ProviderMessage
 from ..types import Tool, ToolDefinition, ToolResult
@@ -40,7 +40,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     provider = OpenRouterProvider()
     message = ProviderMessage(
-        role="user",
+        role=Role.USER,
         content=[
             {"type": "text", "text": prompt},
             {"type": "image_url", "image_url": {"url": data_uri}},

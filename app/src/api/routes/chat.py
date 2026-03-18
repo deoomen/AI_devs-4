@@ -9,7 +9,7 @@ from src.api.schemas import AgentResponse, ChatRequest, DeliverRequest
 from src.domain.agent import Agent, AgentConfig
 from src.domain.entry import Entry
 from src.domain.session import Session
-from src.domain.types import AgentStatus, EntryType
+from src.domain.types import AgentStatus, EntryType, Role
 from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
@@ -57,7 +57,7 @@ async def completions(
         agent_id=agent.id,
         sequence=0,
         type=EntryType.MESSAGE,
-        role="user",
+        role=Role.USER,
         content=req.input,
     )
     await ctx.repos.entries.create(user_entry)
@@ -169,6 +169,6 @@ async def get_agent_status(
 
 def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
     for entry in reversed(entries):
-        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+        if entry.type == EntryType.MESSAGE and entry.role == Role.ASSISTANT and entry.content:
             return entry.content
     return None

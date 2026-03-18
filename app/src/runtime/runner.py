@@ -11,7 +11,7 @@ from src.domain.agent import (
     wait_for,
 )
 from src.domain.entry import Entry
-from src.domain.types import AgentStatus, EntryType, ToolType, WaitType
+from src.domain.types import AgentStatus, EntryType, Role, ToolType, WaitType
 from loguru import logger
 
 from src.events.types import Event, EventName
@@ -22,13 +22,13 @@ from .context import RuntimeContext, set_runtime_context
 
 
 def _entries_to_messages(entries: list[Entry], system_prompt: str) -> list[ProviderMessage]:
-    messages = [ProviderMessage(role="system", content=system_prompt)]
+    messages = [ProviderMessage(role=Role.SYSTEM, content=system_prompt)]
     for entry in entries:
         if entry.type == EntryType.MESSAGE:
-            messages.append(ProviderMessage(role=entry.role or "user", content=entry.content))
+            messages.append(ProviderMessage(role=entry.role or Role.USER, content=entry.content))
         elif entry.type == EntryType.FUNCTION_CALL:
             messages.append(ProviderMessage(
-                role="assistant",
+                role=Role.ASSISTANT,
                 content=None,
                 tool_calls=[{
                     "id": entry.call_id,
@@ -41,7 +41,7 @@ def _entries_to_messages(entries: list[Entry], system_prompt: str) -> list[Provi
             ))
         elif entry.type == EntryType.FUNCTION_CALL_OUTPUT:
             messages.append(ProviderMessage(
-                role="tool",
+                role=Role.TOOL,
                 content=entry.output or "",
                 tool_call_id=entry.call_id,
             ))
@@ -53,7 +53,7 @@ def _messages_to_dicts(messages: list[ProviderMessage]) -> list[dict]:
     result = []
     for m in messages:
         if m.tool_call_id:
-            result.append({"role": "tool", "tool_call_id": m.tool_call_id, "content": m.content or ""})
+            result.append({"role": Role.TOOL, "tool_call_id": m.tool_call_id, "content": m.content or ""})
         elif m.tool_calls:
             result.append({"role": m.role, "content": m.content, "tool_calls": m.tool_calls})
         else:
@@ -180,7 +180,7 @@ async def run_agent(
             await _store_entry(
                 ctx, agent.id,
                 type=EntryType.MESSAGE,
-                role="assistant",
+                role=Role.ASSISTANT,
                 content=response.content,
             )
 
@@ -276,7 +276,7 @@ async def run_agent(
     # Collect final output for the trace
     entries = await ctx.repos.entries.list_by_agent(agent.id)
     last_text = next(
-        (e.content for e in reversed(entries) if e.type == EntryType.MESSAGE and e.role == "assistant" and e.content),
+        (e.content for e in reversed(entries) if e.type == EntryType.MESSAGE and e.role == Role.ASSISTANT and e.content),
         None,
     )
     ctx.events.emit(Event(
