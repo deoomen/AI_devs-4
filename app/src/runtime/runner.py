@@ -109,6 +109,15 @@ async def run_agent(
         logger.info("Token estimate: ~{} tokens (turn {})", estimated, agent.turn_count)
 
         # ── LLM call with timing ──────────────────────────────────────────────
+        ctx.events.emit(Event(
+            name=EventName.GENERATION_STARTED,
+            agent_id=agent.id,
+            data={
+                "turn": agent.turn_count,
+                "model": agent.config.model,
+                "input": _messages_to_dicts(messages),
+            },
+        ))
         logger.info("Sending messages: role={} | content={}", messages[-1].role, messages[-1].content)
         gen_start = time.time()
         response = await ctx.provider.chat(
@@ -193,6 +202,11 @@ async def run_agent(
                 ))
             else:
                 # ── Tool call with timing ─────────────────────────────────────
+                ctx.events.emit(Event(
+                    name=EventName.TOOL_STARTED,
+                    agent_id=agent.id,
+                    data={"call_id": tc.id, "name": tc.name, "arguments": tc.arguments},
+                ))
                 tool_start = time.time()
                 result = await ctx.tools.execute(tc.name, tc.arguments)
                 tool_duration_ms = int((time.time() - tool_start) * 1000)
