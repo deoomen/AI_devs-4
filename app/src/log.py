@@ -119,7 +119,7 @@ def setup_logging(level: str = "INFO") -> None:
         format=FILE_FORMAT,
         rotation="00:00",
         retention="7 days",
-        compression="gz",
+        compression=None,
         encoding="utf-8",
         filter=lambda record: _redact_record(record),
     )
