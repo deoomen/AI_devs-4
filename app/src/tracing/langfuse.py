@@ -28,9 +28,9 @@ def _init_client() -> "Langfuse | None":
         client = Langfuse(
             public_key=settings.langfuse_public_key,
             secret_key=settings.langfuse_secret_key,
-            host=settings.langfuse_base_url,
+            base_url=settings.langfuse_base_url,
         )
-        logger.info("Langfuse tracing enabled (host={})", settings.langfuse_base_url)
+        logger.info("Langfuse tracing enabled (base_url={})", settings.langfuse_base_url)
         return client
     except ImportError:
         logger.warning("langfuse package not installed — tracing disabled")
