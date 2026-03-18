@@ -7,6 +7,14 @@ from src.domain.agent import AgentConfig
 AGENTS_DEFINITIONS_DIR = ROOT_DIR / "src" / "workspace" / "agents"
 
 
+def list_agent_names() -> list[str]:
+    """Return names of all available agent configs (excluding the caller)."""
+    return sorted(
+        p.stem.removesuffix(".agent")
+        for p in AGENTS_DEFINITIONS_DIR.glob("*.agent.md")
+    )
+
+
 def load_agent_config(name: str) -> AgentConfig | None:
     path = AGENTS_DEFINITIONS_DIR / f"{name}.agent.md"
     if not path.exists():
@@ -30,6 +38,7 @@ def load_agent_config(name: str) -> AgentConfig | None:
         name=frontmatter.get("name", name),
         model=frontmatter.get("model", ""),
         system_prompt=body,
+        description=frontmatter.get("description", ""),
         tools=frontmatter.get("tools", []),
         max_turns=frontmatter.get("max_turns", 10),
     )

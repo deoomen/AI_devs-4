@@ -7,8 +7,32 @@ from src.domain.item import Item
 from src.domain.types import AgentStatus, ItemType, ToolType
 from src.runtime.context import get_runtime_context
 from src.tools.workspace import get_workspace_root
-from src.workspace.loader import load_agent_config
+from src.workspace.loader import list_agent_names, load_agent_config
 from ..types import Tool, ToolDefinition, ToolResult
+
+
+def _build_description() -> str:
+    from src.config import settings
+    base = (
+        "Spawn a subagent to handle a task autonomously. "
+        "The subagent runs to completion and shares the same workspace (files are accessible to both). "
+        "Returns the subagent's final text output."
+    )
+    agents = []
+    for name in list_agent_names():
+        # Exclude the main orchestrator agent
+        if name == settings.agent_default_name:
+            continue
+        config = load_agent_config(name)
+        if config is None:
+            continue
+        if config.description:
+            agents.append(f"{name} — {config.description}")
+        else:
+            agents.append(name)
+    if agents:
+        base += " Available agents: " + "; ".join(agents) + "."
+    return base
 
 
 def _extract_last_assistant_text(items: list[Item]) -> str | None:
@@ -30,6 +54,11 @@ async def _execute(arguments: dict) -> ToolResult:
     ctx = get_runtime_context()
     if ctx is None:
         return ToolResult(output="No runtime context available", is_error=True)
+
+    # Prevent spawning the main orchestrator agent
+    from src.config import settings
+    if agent_name == settings.agent_default_name:
+        return ToolResult(output=f"Cannot spawn the main agent ('{agent_name}')", is_error=True)
 
     config = load_agent_config(agent_name)
     if config is None:
@@ -86,11 +115,7 @@ spawn_agent_tool = Tool(
     type=ToolType.SYNC,
     definition=ToolDefinition(
         name="spawn_agent",
-        description=(
-            "Spawn a subagent to handle a task autonomously. "
-            "The subagent runs to completion and shares the same workspace (files are accessible to both). "
-            "Returns the subagent's final text output."
-        ),
+        description=_build_description(),
         parameters={
             "type": "object",
             "properties": {

@@ -14,6 +14,7 @@ class AgentConfig:
     name: str
     model: str
     system_prompt: str
+    description: str = ""
     tools: list[str] = field(default_factory=list)
     max_turns: int = 10
 

@@ -1,5 +1,6 @@
 ---
 name: bob
+description: "Research agent — analyzes documents, searches for information, and prepares result files"
 model: ""
 tools:
   - download_file

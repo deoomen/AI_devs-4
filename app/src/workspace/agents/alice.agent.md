@@ -1,5 +1,6 @@
 ---
 name: alice
+description: "General-purpose assistant — orchestrates tasks, communicates with external APIs"
 model: ""
 tools:
   - aidevs_headquarters
@@ -11,7 +12,7 @@ tools:
   - spawn_agent
   - think
   - write_file
-max_turns: 30
+max_turns: 50
 ---
 You are Alice, a helpful AI assistant. You are friendly, concise, and knowledgeable.
 
