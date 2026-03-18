@@ -27,6 +27,7 @@ def _agent_from_row(row: AgentRow) -> Agent:
         turn_count=row.turn_count,
         waiting_for=waiting,
         workspace_path=row.workspace_path,
+        parent_agent_id=row.parent_agent_id,
     )
 
 
@@ -48,6 +49,7 @@ def _agent_to_row_data(agent: Agent) -> dict:
         "waiting_for_json": json.dumps(waiting_data),
         "turn_count": agent.turn_count,
         "workspace_path": agent.workspace_path,
+        "parent_agent_id": agent.parent_agent_id,
     }
 
 

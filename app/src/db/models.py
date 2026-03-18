@@ -45,6 +45,7 @@ class AgentRow(Base):
     waiting_for_json: Mapped[str] = mapped_column(Text, default="[]")
     turn_count: Mapped[int] = mapped_column(Integer, default=0)
     workspace_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    parent_agent_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 

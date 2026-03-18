@@ -27,6 +27,7 @@ class Agent:
     turn_count: int = 0
     waiting_for: list[WaitEntry] = field(default_factory=list)
     workspace_path: str | None = None
+    parent_agent_id: str | None = None
 
 
 # Pure state transitions
