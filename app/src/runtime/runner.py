@@ -61,6 +61,15 @@ def _messages_to_dicts(messages: list[ProviderMessage]) -> list[dict]:
     return result
 
 
+def _bind_log_context(session_id: str, agent_id: str, agent_name: str) -> None:
+    """Bind session/agent info to loguru context for all subsequent log calls."""
+    logger.configure(extra={
+        "session_id": session_id[:8],
+        "agent_id": agent_id[:8],
+        "agent_name": agent_name,
+    })
+
+
 async def _store_item(ctx: RuntimeContext, agent_id: str, **kwargs) -> Item:
     seq = await ctx.repos.items.next_sequence(agent_id)
     item = Item(id=str(uuid.uuid4()), agent_id=agent_id, sequence=seq, **kwargs)
@@ -77,6 +86,7 @@ async def run_agent(
     """Main agent loop. Returns agent in COMPLETED or WAITING state."""
     ctx.agent_id = agent.id
     set_runtime_context(ctx)
+    _bind_log_context(ctx.session_id, agent.id, agent.config.name)
     if ctx.agent_workspace:
         set_workspace_root(ctx.agent_workspace)
 

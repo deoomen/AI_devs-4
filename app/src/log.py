@@ -65,11 +65,22 @@ class _InterceptHandler(logging.Handler):
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+_CTX = (
+    "<dim>sid:{extra[session_id]}</dim> | "
+    "<dim>agent:{extra[agent_name]}({extra[agent_id]})</dim>"
+)
+
+_CTX_PLAIN = (
+    "sid:{extra[session_id]} | "
+    "agent:{extra[agent_name]}({extra[agent_id]})"
+)
+
 CONSOLE_FORMAT = (
     "<green>{time:YYYY-MM-DDTHH:mm:ss.SSSZ}</green> | "
     "<level>{level: <8}</level> | "
     "<dim>pid:{process} tid:{thread}</dim> | "
     "<dim>{elapsed}</dim> | "
+    f"{_CTX} | "
     "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> — "
     "{message}"
 )
@@ -79,6 +90,7 @@ FILE_FORMAT = (
     "{level: <8} | "
     "pid:{process} tid:{thread} | "
     "{elapsed} | "
+    f"{_CTX_PLAIN} | "
     "{name}:{function}:{line} — "
     "{message}"
 )
@@ -87,6 +99,9 @@ FILE_FORMAT = (
 def setup_logging(level: str = "INFO") -> None:
     """Configure loguru as the sole logging sink with redaction."""
     logger.remove()
+
+    # Default context values (before any agent binds its own)
+    logger.configure(extra={"session_id": "-", "agent_id": "-", "agent_name": "-"})
 
     # Console sink (colorized, redacted)
     logger.add(
