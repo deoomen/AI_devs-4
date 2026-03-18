@@ -50,7 +50,7 @@ def get_langfuse() -> "Langfuse | None":
     return _client
 
 
-def flush() -> None:
+def flush_langfuse() -> None:
     """Flush pending events to Langfuse (call on app shutdown)."""
     client = get_langfuse()
     if client is not None:

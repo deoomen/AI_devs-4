@@ -14,6 +14,7 @@ from src.domain.session import Session
 from src.domain.types import AgentStatus, ItemType
 from src.events.emitter import EventEmitter
 from src.events.logger import log_event
+from src.events.types import EventName
 from src.providers.openrouter import OpenRouterProvider
 from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
@@ -49,7 +50,7 @@ class StandaloneAgent:
         self._tools = ToolRegistry.build_default()
         self._provider = OpenRouterProvider()
         self._events = EventEmitter()
-        self._events.on("*", log_event)
+        self._events.on(EventName.ALL, log_event)
         subscribe_langfuse(self._events)
 
     async def send(self, message: str) -> AgentResult:

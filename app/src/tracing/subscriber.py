@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 
 from src.events.emitter import EventEmitter
-from src.events.types import Event
+from src.events.types import Event, EventName
 from src.tracing.langfuse import get_langfuse
 
 if TYPE_CHECKING:
@@ -121,11 +121,11 @@ def subscribe_langfuse(events: EventEmitter) -> None:
             metadata={"is_error": is_error},
         )
 
-    events.on("agent.started", on_agent_started)
-    events.on("agent.completed", on_agent_completed)
-    events.on("agent.failed", on_agent_failed)
-    events.on("agent.waiting", on_agent_waiting)
-    events.on("generation.completed", on_generation_completed)
-    events.on("tool.completed", on_tool_completed)
+    events.on(EventName.AGENT_STARTED, on_agent_started)
+    events.on(EventName.AGENT_COMPLETED, on_agent_completed)
+    events.on(EventName.AGENT_FAILED, on_agent_failed)
+    events.on(EventName.AGENT_WAITING, on_agent_waiting)
+    events.on(EventName.GENERATION_COMPLETED, on_generation_completed)
+    events.on(EventName.TOOL_COMPLETED, on_tool_completed)
 
     logger.info("Langfuse subscriber attached")

@@ -7,6 +7,7 @@ from src.db.engine import async_session_factory
 from src.domain.user import User
 from src.events.emitter import EventEmitter
 from src.events.logger import log_event
+from src.events.types import EventName
 from src.middleware.auth import authenticate
 from src.middleware.rate_limit import rate_limiter
 from src.providers.openrouter import OpenRouterProvider
@@ -22,7 +23,7 @@ _tool_registry = ToolRegistry.build_default()
 
 def _build_event_emitter() -> EventEmitter:
     emitter = EventEmitter()
-    emitter.on("*", log_event)
+    emitter.on(EventName.ALL, log_event)
     subscribe_langfuse(emitter)
     return emitter
 

@@ -16,7 +16,7 @@ from src.db.engine import engine
 from src.db.models import Base
 from src.db.seed import seed_default_user
 from src.errors import AppError, error_envelope
-from src.tracing.langfuse import flush as langfuse_flush
+from src.tracing.langfuse import flush_langfuse
 
 
 @asynccontextmanager
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     logger.info("App ready — {}", settings.app_name)
     yield
     await engine.dispose()
-    langfuse_flush()
+    flush_langfuse()
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)

@@ -14,7 +14,7 @@ from src.domain.item import Item
 from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
 from loguru import logger
 
-from src.events.types import Event
+from src.events.types import Event, EventName
 from src.providers.types import ProviderMessage, estimate_tokens
 from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext
@@ -81,7 +81,7 @@ async def run_agent(
         agent = start_agent(agent)
         await ctx.repos.agents.update(agent)
         ctx.events.emit(Event(
-            name="agent.started",
+            name=EventName.AGENT_STARTED,
             agent_id=agent.id,
             data={
                 "agent_name": agent.config.name,
@@ -100,7 +100,7 @@ async def run_agent(
         messages = _items_to_messages(items, agent.config.system_prompt)
 
         ctx.events.emit(Event(
-            name="turn.start",
+            name=EventName.TURN_START,
             agent_id=agent.id,
             data={"turn": agent.turn_count, "items": len(items)},
         ))
@@ -128,7 +128,7 @@ async def run_agent(
             )
 
         ctx.events.emit(Event(
-            name="generation.completed",
+            name=EventName.GENERATION_COMPLETED,
             agent_id=agent.id,
             data={
                 "model": response.model,
@@ -187,7 +187,7 @@ async def run_agent(
                     type=WaitType.TOOL_RESULT,
                 ))
                 ctx.events.emit(Event(
-                    name="tool.human_requested",
+                    name=EventName.TOOL_HUMAN_REQUESTED,
                     agent_id=agent.id,
                     data={"call_id": tc.id, "tool": tc.name, "arguments": tc.arguments},
                 ))
@@ -206,7 +206,7 @@ async def run_agent(
                     is_error=result.is_error,
                 )
                 ctx.events.emit(Event(
-                    name="tool.completed",
+                    name=EventName.TOOL_COMPLETED,
                     agent_id=agent.id,
                     data={
                         "name": tc.name,
@@ -223,7 +223,7 @@ async def run_agent(
             agent = wait_for(agent, human_waits)
             await ctx.repos.agents.update(agent)
             ctx.events.emit(Event(
-                name="agent.waiting",
+                name=EventName.AGENT_WAITING,
                 agent_id=agent.id,
                 data={"waiting_for": [w.call_id for w in human_waits]},
             ))
@@ -246,7 +246,7 @@ async def run_agent(
         None,
     )
     ctx.events.emit(Event(
-        name="agent.completed",
+        name=EventName.AGENT_COMPLETED,
         agent_id=agent.id,
         data={"output": last_text},
     ))
@@ -266,7 +266,7 @@ async def deliver_result(ctx: RuntimeContext, agent: Agent, call_id: str, output
     await ctx.repos.agents.update(agent)
 
     if agent.status == AgentStatus.RUNNING:
-        ctx.events.emit(Event(name="agent.resumed", agent_id=agent.id))
+        ctx.events.emit(Event(name=EventName.AGENT_RESUMED, agent_id=agent.id))
         return await run_agent(ctx, agent)
 
     return agent
