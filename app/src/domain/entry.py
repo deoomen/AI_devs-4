@@ -8,7 +8,7 @@ class Entry:
     agent_id: str
     sequence: int
     type: EntryType
-    role: Role | None = None
+    role: Role
     content: str | None = None
     call_id: str | None = None
     name: str | None = None

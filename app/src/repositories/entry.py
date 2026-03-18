@@ -15,7 +15,7 @@ def _entry_from_row(row: EntryRow) -> Entry:
         agent_id=row.agent_id,
         sequence=row.sequence,
         type=EntryType(row.type),
-        role=Role(row.role) if row.role else None,
+        role=Role(row.role),
         content=row.content,
         call_id=row.call_id,
         name=row.name,

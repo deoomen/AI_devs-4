@@ -57,7 +57,7 @@ class EntryRow(Base):
     agent_id: Mapped[str] = mapped_column(ForeignKey("agents.id"), nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     type: Mapped[str] = mapped_column(String(30), nullable=False)
-    role: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     call_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)

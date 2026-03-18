@@ -25,10 +25,10 @@ def _entries_to_messages(entries: list[Entry], system_prompt: str) -> list[Provi
     messages = [ProviderMessage(role=Role.SYSTEM, content=system_prompt)]
     for entry in entries:
         if entry.type == EntryType.MESSAGE:
-            messages.append(ProviderMessage(role=entry.role or Role.USER, content=entry.content))
+            messages.append(ProviderMessage(role=entry.role, content=entry.content))
         elif entry.type == EntryType.FUNCTION_CALL:
             messages.append(ProviderMessage(
-                role=Role.ASSISTANT,
+                role=entry.role,
                 content=None,
                 tool_calls=[{
                     "id": entry.call_id,
@@ -41,7 +41,7 @@ def _entries_to_messages(entries: list[Entry], system_prompt: str) -> list[Provi
             ))
         elif entry.type == EntryType.FUNCTION_CALL_OUTPUT:
             messages.append(ProviderMessage(
-                role=Role.TOOL,
+                role=entry.role,
                 content=entry.output or "",
                 tool_call_id=entry.call_id,
             ))
@@ -189,6 +189,7 @@ async def run_agent(
             await _store_entry(
                 ctx, agent.id,
                 type=EntryType.FUNCTION_CALL,
+                role=Role.ASSISTANT,
                 call_id=tc.id,
                 name=tc.name,
                 arguments=tc.arguments,
@@ -202,6 +203,7 @@ async def run_agent(
                 await _store_entry(
                     ctx, agent.id,
                     type=EntryType.FUNCTION_CALL_OUTPUT,
+                    role=Role.TOOL,
                     call_id=tc.id,
                     name=tc.name,
                     output=f"Unknown tool: {tc.name}",
@@ -234,6 +236,7 @@ async def run_agent(
                 await _store_entry(
                     ctx, agent.id,
                     type=EntryType.FUNCTION_CALL_OUTPUT,
+                    role=Role.TOOL,
                     call_id=tc.id,
                     name=tc.name,
                     output=result.output,
@@ -292,6 +295,7 @@ async def deliver_result(ctx: RuntimeContext, agent: Agent, call_id: str, output
     await _store_entry(
         ctx, agent.id,
         type=EntryType.FUNCTION_CALL_OUTPUT,
+        role=Role.TOOL,
         call_id=call_id,
         output=output,
     )
