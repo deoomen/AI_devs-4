@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .agent import AgentRepository
-from .item import ItemRepository
+from .entry import EntryRepository
 from .session import SessionRepository
 from .user import UserRepository
 
@@ -13,7 +13,7 @@ class Repositories:
     users: UserRepository
     sessions: SessionRepository
     agents: AgentRepository
-    items: ItemRepository
+    entries: EntryRepository
 
 
 def create_repositories(db: AsyncSession) -> Repositories:
@@ -21,5 +21,5 @@ def create_repositories(db: AsyncSession) -> Repositories:
         users=UserRepository(db),
         sessions=SessionRepository(db),
         agents=AgentRepository(db),
-        items=ItemRepository(db),
+        entries=EntryRepository(db),
     )

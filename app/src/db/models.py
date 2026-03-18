@@ -50,8 +50,8 @@ class AgentRow(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
-class ItemRow(Base):
-    __tablename__ = "items"
+class EntryRow(Base):
+    __tablename__ = "entries"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     agent_id: Mapped[str] = mapped_column(ForeignKey("agents.id"), nullable=False)

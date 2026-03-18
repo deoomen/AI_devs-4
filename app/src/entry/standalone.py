@@ -9,9 +9,9 @@ from pathlib import Path
 
 from src.db.engine import async_session_factory
 from src.domain.agent import Agent, WaitEntry
-from src.domain.item import Item
+from src.domain.entry import Entry
 from src.domain.session import Session
-from src.domain.types import AgentStatus, ItemType
+from src.domain.types import AgentStatus, EntryType
 from src.events.emitter import EventEmitter
 from src.events.logger import log_event
 from src.events.types import EventName
@@ -26,10 +26,10 @@ from src.tracing.langfuse import flush_langfuse
 from src.tracing.subscriber import subscribe_langfuse
 
 
-def _extract_last_assistant_text(items: list[Item]) -> str | None:
-    for item in reversed(items):
-        if item.type == ItemType.MESSAGE and item.role == "assistant" and item.content:
-            return item.content
+def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
+    for entry in reversed(entries):
+        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+            return entry.content
     return None
 
 
@@ -99,13 +99,13 @@ class StandaloneAgent:
                 ctx.agent_workspace = Path(agent.workspace_path)
 
             agent = await deliver_result(ctx, agent, call_id, output)
-            items = await repos.items.list_by_agent(agent.id)
+            entries = await repos.entries.list_by_agent(agent.id)
             await db.commit()
 
         return AgentResult(
             agent_id=agent.id,
             status=agent.status,
-            output=_extract_last_assistant_text(items),
+            output=_extract_last_assistant_text(entries),
             waiting_for=agent.waiting_for if agent.waiting_for else None,
         )
 
@@ -157,23 +157,23 @@ class StandaloneAgent:
         return await self._run_and_collect(ctx, agent, user_input=message)
 
     async def _add_user_message(self, ctx: RuntimeContext, agent_id: str, message: str) -> None:
-        seq = await ctx.repos.items.next_sequence(agent_id)
-        item = Item(
+        seq = await ctx.repos.entries.next_sequence(agent_id)
+        entry = Entry(
             id=str(uuid.uuid4()),
             agent_id=agent_id,
             sequence=seq,
-            type=ItemType.MESSAGE,
+            type=EntryType.MESSAGE,
             role="user",
             content=message,
         )
-        await ctx.repos.items.create(item)
+        await ctx.repos.entries.create(entry)
 
     async def _run_and_collect(self, ctx: RuntimeContext, agent: Agent, user_input: str = "") -> AgentResult:
         agent = await run_agent(ctx, agent, user_id="standalone", user_input=user_input)
-        items = await ctx.repos.items.list_by_agent(agent.id)
+        entries = await ctx.repos.entries.list_by_agent(agent.id)
         return AgentResult(
             agent_id=agent.id,
             status=agent.status,
-            output=_extract_last_assistant_text(items),
+            output=_extract_last_assistant_text(entries),
             waiting_for=agent.waiting_for if agent.waiting_for else None,
         )

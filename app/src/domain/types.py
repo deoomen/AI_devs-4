@@ -14,7 +14,7 @@ class SessionStatus(StrEnum):
     CLOSED = "closed"
 
 
-class ItemType(StrEnum):
+class EntryType(StrEnum):
     MESSAGE = "message"
     FUNCTION_CALL = "function_call"
     FUNCTION_CALL_OUTPUT = "function_call_output"

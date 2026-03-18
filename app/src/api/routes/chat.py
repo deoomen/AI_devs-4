@@ -7,9 +7,9 @@ from fastapi.responses import JSONResponse
 from src.api.deps import check_rate_limit, get_runtime
 from src.api.schemas import AgentResponse, ChatRequest, DeliverRequest
 from src.domain.agent import Agent, AgentConfig
-from src.domain.item import Item
+from src.domain.entry import Entry
 from src.domain.session import Session
-from src.domain.types import AgentStatus, ItemType
+from src.domain.types import AgentStatus, EntryType
 from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
@@ -52,15 +52,15 @@ async def completions(
     ctx.agent_workspace = agent_ws
 
     # Store user message
-    user_item = Item(
+    user_entry = Entry(
         id=str(uuid.uuid4()),
         agent_id=agent.id,
         sequence=0,
-        type=ItemType.MESSAGE,
+        type=EntryType.MESSAGE,
         role="user",
         content=req.input,
     )
-    await ctx.repos.items.create(user_item)
+    await ctx.repos.entries.create(user_entry)
 
     # Run agent
     try:
@@ -69,8 +69,8 @@ async def completions(
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
-    items = await ctx.repos.items.list_by_agent(agent.id)
-    last_text = _extract_last_assistant_text(items)
+    entries = await ctx.repos.entries.list_by_agent(agent.id)
+    last_text = _extract_last_assistant_text(entries)
 
     if agent.status == AgentStatus.WAITING:
         return JSONResponse(
@@ -118,8 +118,8 @@ async def deliver(
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
-    items = await ctx.repos.items.list_by_agent(agent.id)
-    last_text = _extract_last_assistant_text(items)
+    entries = await ctx.repos.entries.list_by_agent(agent.id)
+    last_text = _extract_last_assistant_text(entries)
 
     if agent.status == AgentStatus.WAITING:
         return JSONResponse(
@@ -153,8 +153,8 @@ async def get_agent_status(
         err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
 
-    items = await ctx.repos.items.list_by_agent(agent.id)
-    last_text = _extract_last_assistant_text(items)
+    entries = await ctx.repos.entries.list_by_agent(agent.id)
+    last_text = _extract_last_assistant_text(entries)
 
     return AgentResponse(
         agent_id=agent.id,
@@ -167,8 +167,8 @@ async def get_agent_status(
     )
 
 
-def _extract_last_assistant_text(items: list[Item]) -> str | None:
-    for item in reversed(items):
-        if item.type == ItemType.MESSAGE and item.role == "assistant" and item.content:
-            return item.content
+def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
+    for entry in reversed(entries):
+        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+            return entry.content
     return None

@@ -3,8 +3,8 @@ import uuid
 from loguru import logger
 
 from src.domain.agent import Agent
-from src.domain.item import Item
-from src.domain.types import AgentStatus, ItemType, ToolType
+from src.domain.entry import Entry
+from src.domain.types import AgentStatus, EntryType, ToolType
 from src.runtime.context import get_runtime_context
 from src.tools.workspace import get_workspace_root
 from src.workspace.loader import list_agent_names, load_agent_config
@@ -35,10 +35,10 @@ def _build_description() -> str:
     return base
 
 
-def _extract_last_assistant_text(items: list[Item]) -> str | None:
-    for item in reversed(items):
-        if item.type == ItemType.MESSAGE and item.role == "assistant" and item.content:
-            return item.content
+def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
+    for entry in reversed(entries):
+        if entry.type == EntryType.MESSAGE and entry.role == "assistant" and entry.content:
+            return entry.content
     return None
 
 
@@ -79,16 +79,16 @@ async def _execute(arguments: dict) -> ToolResult:
     await ctx.repos.agents.create(agent)
 
     # Add user message
-    seq = await ctx.repos.items.next_sequence(agent_id)
-    item = Item(
+    seq = await ctx.repos.entries.next_sequence(agent_id)
+    entry = Entry(
         id=str(uuid.uuid4()),
         agent_id=agent_id,
         sequence=seq,
-        type=ItemType.MESSAGE,
+        type=EntryType.MESSAGE,
         role="user",
         content=message,
     )
-    await ctx.repos.items.create(item)
+    await ctx.repos.entries.create(entry)
 
     logger.info("Spawning subagent '{}' (id={})", agent_name, agent_id)
 
@@ -96,8 +96,8 @@ async def _execute(arguments: dict) -> ToolResult:
     from src.runtime.runner import run_agent
     agent = await run_agent(ctx, agent, user_id="subagent")
 
-    items = await ctx.repos.items.list_by_agent(agent.id)
-    output = _extract_last_assistant_text(items)
+    entries = await ctx.repos.entries.list_by_agent(agent.id)
+    output = _extract_last_assistant_text(entries)
 
     if agent.status == AgentStatus.COMPLETED:
         logger.info("Subagent '{}' completed", agent_name)

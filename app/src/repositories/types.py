@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from src.domain.agent import Agent
-from src.domain.item import Item
+from src.domain.entry import Entry
 from src.domain.session import Session
 from src.domain.user import User
 
@@ -21,7 +21,7 @@ class AgentRepo(Protocol):
     async def update(self, agent: Agent) -> Agent: ...
 
 
-class ItemRepo(Protocol):
-    async def create(self, item: Item) -> Item: ...
-    async def list_by_agent(self, agent_id: str) -> list[Item]: ...
+class EntryRepo(Protocol):
+    async def create(self, entry: Entry) -> Entry: ...
+    async def list_by_agent(self, agent_id: str) -> list[Entry]: ...
     async def next_sequence(self, agent_id: str) -> int: ...

@@ -13,7 +13,7 @@ app/                    # Root directory
 │   ├── api/            # HTTP layer (schemas, dependency injection)
 │   │   └── routes/     # FastAPI route handlers (chat, health)
 │   ├── db/             # Async SQLAlchemy engine, ORM models, seeding
-│   ├── domain/         # Core entities (Agent, Session, Item, User) and enums
+│   ├── domain/         # Core entities (Agent, Session, Entry, User) and enums
 │   ├── entry/          # Entry points (HTTP server, standalone runner)
 │   ├── events/         # Pub/sub event emitter, handlers, event types
 │   ├── middleware/     # Auth (Bearer token) and per-user rate limiting

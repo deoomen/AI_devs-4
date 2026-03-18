@@ -10,8 +10,8 @@ from src.domain.agent import (
     start_agent,
     wait_for,
 )
-from src.domain.item import Item
-from src.domain.types import AgentStatus, ItemType, ToolType, WaitType
+from src.domain.entry import Entry
+from src.domain.types import AgentStatus, EntryType, ToolType, WaitType
 from loguru import logger
 
 from src.events.types import Event, EventName
@@ -21,29 +21,29 @@ from src.tools.workspace import set_workspace_root
 from .context import RuntimeContext, set_runtime_context
 
 
-def _items_to_messages(items: list[Item], system_prompt: str) -> list[ProviderMessage]:
+def _entries_to_messages(entries: list[Entry], system_prompt: str) -> list[ProviderMessage]:
     messages = [ProviderMessage(role="system", content=system_prompt)]
-    for item in items:
-        if item.type == ItemType.MESSAGE:
-            messages.append(ProviderMessage(role=item.role or "user", content=item.content))
-        elif item.type == ItemType.FUNCTION_CALL:
+    for entry in entries:
+        if entry.type == EntryType.MESSAGE:
+            messages.append(ProviderMessage(role=entry.role or "user", content=entry.content))
+        elif entry.type == EntryType.FUNCTION_CALL:
             messages.append(ProviderMessage(
                 role="assistant",
                 content=None,
                 tool_calls=[{
-                    "id": item.call_id,
+                    "id": entry.call_id,
                     "type": "function",
                     "function": {
-                        "name": item.name,
-                        "arguments": json.dumps(item.arguments or {}),
+                        "name": entry.name,
+                        "arguments": json.dumps(entry.arguments or {}),
                     },
                 }],
             ))
-        elif item.type == ItemType.FUNCTION_CALL_OUTPUT:
+        elif entry.type == EntryType.FUNCTION_CALL_OUTPUT:
             messages.append(ProviderMessage(
                 role="tool",
-                content=item.output or "",
-                tool_call_id=item.call_id,
+                content=entry.output or "",
+                tool_call_id=entry.call_id,
             ))
     return messages
 
@@ -70,11 +70,11 @@ def _bind_log_context(session_id: str, agent_id: str, agent_name: str) -> None:
     })
 
 
-async def _store_item(ctx: RuntimeContext, agent_id: str, **kwargs) -> Item:
-    seq = await ctx.repos.items.next_sequence(agent_id)
-    item = Item(id=str(uuid.uuid4()), agent_id=agent_id, sequence=seq, **kwargs)
-    await ctx.repos.items.create(item)
-    return item
+async def _store_entry(ctx: RuntimeContext, agent_id: str, **kwargs) -> Entry:
+    seq = await ctx.repos.entries.next_sequence(agent_id)
+    entry = Entry(id=str(uuid.uuid4()), agent_id=agent_id, sequence=seq, **kwargs)
+    await ctx.repos.entries.create(entry)
+    return entry
 
 
 async def run_agent(
@@ -109,13 +109,13 @@ async def run_agent(
     max_turns = agent.config.max_turns
 
     while agent.turn_count < max_turns:
-        items = await ctx.repos.items.list_by_agent(agent.id)
-        messages = _items_to_messages(items, agent.config.system_prompt)
+        entries = await ctx.repos.entries.list_by_agent(agent.id)
+        messages = _entries_to_messages(entries, agent.config.system_prompt)
 
         ctx.events.emit(Event(
             name=EventName.TURN_START,
             agent_id=agent.id,
-            data={"turn": agent.turn_count, "items": len(items)},
+            data={"turn": agent.turn_count, "entries": len(entries)},
         ))
 
         estimated = estimate_tokens(messages, tool_defs or None)
@@ -177,18 +177,18 @@ async def run_agent(
 
         # Store assistant text if present
         if response.content:
-            await _store_item(
+            await _store_entry(
                 ctx, agent.id,
-                type=ItemType.MESSAGE,
+                type=EntryType.MESSAGE,
                 role="assistant",
                 content=response.content,
             )
 
         # Store function calls
         for tc in response.tool_calls:
-            await _store_item(
+            await _store_entry(
                 ctx, agent.id,
-                type=ItemType.FUNCTION_CALL,
+                type=EntryType.FUNCTION_CALL,
                 call_id=tc.id,
                 name=tc.name,
                 arguments=tc.arguments,
@@ -199,9 +199,9 @@ async def run_agent(
         for tc in response.tool_calls:
             tool = ctx.tools.get(tc.name)
             if tool is None:
-                await _store_item(
+                await _store_entry(
                     ctx, agent.id,
-                    type=ItemType.FUNCTION_CALL_OUTPUT,
+                    type=EntryType.FUNCTION_CALL_OUTPUT,
                     call_id=tc.id,
                     name=tc.name,
                     output=f"Unknown tool: {tc.name}",
@@ -231,9 +231,9 @@ async def run_agent(
                 result = await ctx.tools.execute(tc.name, tc.arguments)
                 tool_duration_ms = int((time.time() - tool_start) * 1000)
 
-                await _store_item(
+                await _store_entry(
                     ctx, agent.id,
-                    type=ItemType.FUNCTION_CALL_OUTPUT,
+                    type=EntryType.FUNCTION_CALL_OUTPUT,
                     call_id=tc.id,
                     name=tc.name,
                     output=result.output,
@@ -274,9 +274,9 @@ async def run_agent(
     await ctx.repos.agents.update(agent)
 
     # Collect final output for the trace
-    items = await ctx.repos.items.list_by_agent(agent.id)
+    entries = await ctx.repos.entries.list_by_agent(agent.id)
     last_text = next(
-        (i.content for i in reversed(items) if i.type == ItemType.MESSAGE and i.role == "assistant" and i.content),
+        (e.content for e in reversed(entries) if e.type == EntryType.MESSAGE and e.role == "assistant" and e.content),
         None,
     )
     ctx.events.emit(Event(
@@ -289,9 +289,9 @@ async def run_agent(
 
 async def deliver_result(ctx: RuntimeContext, agent: Agent, call_id: str, output: str) -> Agent:
     """Deliver a tool result to a waiting agent, then resume the loop."""
-    await _store_item(
+    await _store_entry(
         ctx, agent.id,
-        type=ItemType.FUNCTION_CALL_OUTPUT,
+        type=EntryType.FUNCTION_CALL_OUTPUT,
         call_id=call_id,
         output=output,
     )

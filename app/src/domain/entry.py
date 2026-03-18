@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
-from .types import ItemType
+from .types import EntryType
 
 
 @dataclass
-class Item:
+class Entry:
     id: str
     agent_id: str
     sequence: int
-    type: ItemType
+    type: EntryType
     role: str | None = None
     content: str | None = None
     call_id: str | None = None
