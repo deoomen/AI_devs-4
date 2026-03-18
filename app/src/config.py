@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Langfuse tracing
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
-    langfuse_host: str = "https://cloud.langfuse.com"
+    langfuse_base_url: str = "https://cloud.langfuse.com"
 
     # Template variable whitelist — maps {{PLACEHOLDER}} names to setting field names.
     # Only listed keys are resolved in user messages.

@@ -1,5 +1,5 @@
 aiosqlite>=0.21
-langfuse>=2.0
+langfuse>=4.0
 alembic>=1.15
 fastapi>=0.115
 dotenv
