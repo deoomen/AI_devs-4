@@ -36,7 +36,7 @@ async def _execute(arguments: dict) -> ToolResult:
             is_error=True,
         )
 
-    logger.info("analyze_image {} with prompt: {}", path, prompt[:100])
+    logger.info("analyze_image {} with prompt: {}", path, prompt)
 
     provider = OpenRouterProvider()
     message = ProviderMessage(

@@ -39,6 +39,8 @@ class ToolRegistry:
         registry.register(spawn_agent_tool)
         registry.register(think_tool)
         registry.register(write_file_tool)
+        logger.info("Registered built-in tools: {}", len(registry._tools.keys()))
+
         return registry
 
     def register(self, tool: Tool) -> None:

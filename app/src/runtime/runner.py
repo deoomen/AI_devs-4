@@ -119,7 +119,15 @@ async def run_agent(
         ))
 
         estimated = estimate_tokens(messages, tool_defs or None)
-        logger.info("Token estimate: ~{} tokens (turn {})", estimated, agent.turn_count)
+        logger.info("Turn {} | ~{} tokens | {} messages", agent.turn_count, estimated, len(messages))
+
+        # Log system prompt on first turn only
+        if agent.turn_count == 0:
+            logger.info("System prompt: {}…", agent.config.system_prompt)
+
+        # Log the last message being sent (user input or tool result)
+        last = messages[-1]
+        logger.info("Last message: role={} | {}", last.role, (last.content or ""))
 
         # ── LLM call with timing ──────────────────────────────────────────────
         ctx.events.emit(Event(
@@ -131,7 +139,6 @@ async def run_agent(
                 "input": _messages_to_dicts(messages),
             },
         ))
-        logger.info("Sending messages: role={} | content={}", messages[-1].role, messages[-1].content)
         gen_start = time.time()
         response = await ctx.provider.chat(
             messages=messages,
@@ -140,7 +147,7 @@ async def run_agent(
         )
         gen_duration_ms = int((time.time() - gen_start) * 1000)
 
-        logger.info("Received response: finish_reason={} | content={}", response.finish_reason, response.content)
+        logger.info("LLM response: finish={} | {}", response.finish_reason, (response.content or ""))
 
         if response.usage:
             logger.info(
