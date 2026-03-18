@@ -21,7 +21,7 @@ def _build_description() -> str:
     base = (
         "Spawn a subagent to handle a task autonomously. "
         "The subagent gets its own isolated workspace. "
-        "Pass files via input_files; results appear in your inbox/{agent_name}_{id}/. "
+        "Pass files via input_files; results appear in your inbox/agnt_{id}/. "
         "Returns the subagent's final text output plus a manifest of produced files."
     )
     agents = []
@@ -67,15 +67,15 @@ def _copy_input_files(input_files: list[str], parent_workspace: Path, child_inbo
 
 
 def _copy_outbox_to_parent_inbox(
-    child_outbox: Path, parent_workspace: Path, agent_name: str, short_id: str,
+    child_outbox: Path, parent_workspace: Path, short_id: str,
 ) -> list[str]:
-    """Copy child outbox files into parent's inbox/{agent_name}_{short_id}/. Returns filenames."""
+    """Copy child outbox files into parent's inbox/agnt_{short_id}/. Returns filenames."""
     if not child_outbox.is_dir():
         return []
     files = [f for f in child_outbox.iterdir() if f.is_file()]
     if not files:
         return []
-    parent_inbox = parent_workspace / "inbox" / f"{agent_name}_{short_id}"
+    parent_inbox = parent_workspace / "inbox" / f"agnt_{short_id}"
     parent_inbox.mkdir(parents=True, exist_ok=True)
     copied = []
     for f in files:
@@ -93,7 +93,7 @@ def _build_result_text(
     """Build enhanced tool result with output and file manifest."""
     parts = [output or "(no output)"]
     if bridged_files:
-        inbox_prefix = f"inbox/{agent_name}_{short_id}"
+        inbox_prefix = f"inbox/agnt_{short_id}"
         parts.append(f"\n--- Files available in {inbox_prefix}/ ---")
         for name in bridged_files:
             file_path = f"{inbox_prefix}/{name}"
@@ -178,7 +178,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     # Bridge: copy child outbox → parent inbox
     bridged_files = _copy_outbox_to_parent_inbox(
-        child_workspace / "outbox", parent_workspace, agent_name, short_id,
+        child_workspace / "outbox", parent_workspace, short_id,
     )
     if bridged_files:
         logger.info("Bridged {} file(s) from child outbox to parent inbox", len(bridged_files))
