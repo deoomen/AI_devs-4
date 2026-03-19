@@ -78,11 +78,6 @@ class OpenRouterProvider(Provider):
         response, headers = await self._call_with_retry(kwargs)
         _log_rate_limits(headers, kwargs["model"])
         await _wait_if_rate_limited(headers, kwargs["model"])
-
-        if not response.choices:
-            error_msg = getattr(response, "error", None) or "empty response from provider"
-            raise RuntimeError(f"LLM returned no choices: {error_msg}")
-
         choice = response.choices[0]
 
         tool_calls = []
@@ -115,12 +110,28 @@ class OpenRouterProvider(Provider):
         )
 
     async def _call_with_retry(self, kwargs: dict):
+        last_error: Exception | None = None
         for attempt in range(settings.provider_max_retries):
             try:
                 raw = await self._client.chat.completions.with_raw_response.create(**kwargs)
-                return raw.parse(), raw.headers
+                parsed = raw.parse()
+                # Treat empty choices as a transient error (e.g. provider 500 forwarded as empty response)
+                if not parsed.choices:
+                    error_detail = getattr(parsed, "error", None) or "empty choices"
+                    last_error = RuntimeError(f"LLM returned no choices: {error_detail}")
+                    if attempt < settings.provider_max_retries - 1:
+                        wait = 2 ** attempt + 1
+                        logger.warning(
+                            "Provider returned empty choices (attempt {}/{}), retrying in {}s: {}",
+                            attempt + 1, settings.provider_max_retries, wait, error_detail,
+                        )
+                        await asyncio.sleep(wait)
+                        continue
+                    raise last_error
+                return parsed, raw.headers
             except RateLimitError as e:
                 retry_after = _parse_retry_after(e)
+                last_error = e
                 if attempt == settings.provider_max_retries - 1:
                     raise
                 logger.warning(
@@ -128,6 +139,18 @@ class OpenRouterProvider(Provider):
                     attempt + 1, settings.provider_max_retries, retry_after,
                 )
                 await asyncio.sleep(retry_after)
+            except APIStatusError as e:
+                last_error = e
+                if e.status_code >= 500 and attempt < settings.provider_max_retries - 1:
+                    wait = 2 ** attempt + 1
+                    logger.warning(
+                        "Provider server error {} (attempt {}/{}), retrying in {}s",
+                        e.status_code, attempt + 1, settings.provider_max_retries, wait,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                raise
+        raise last_error or RuntimeError("Provider call failed after retries")
 
 
 _RATE_LIMIT_HEADERS = [
