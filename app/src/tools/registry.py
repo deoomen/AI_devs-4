@@ -24,6 +24,7 @@ class ToolRegistry:
         from .native.spawn_agent import spawn_agent_tool
         from .native.think import think_tool
         from .native.write_file import write_file_tool
+        from .native.zmail import zmail_tool
 
         registry = cls()
         registry.register(aidevs_headquarters_tool)
@@ -39,6 +40,7 @@ class ToolRegistry:
         registry.register(spawn_agent_tool)
         registry.register(think_tool)
         registry.register(write_file_tool)
+        registry.register(zmail_tool)
         logger.info("Registered built-in tools: {}", len(registry._tools.keys()))
 
         return registry
