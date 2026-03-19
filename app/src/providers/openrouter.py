@@ -2,7 +2,7 @@ import asyncio
 import json
 
 from loguru import logger
-from openai import AsyncOpenAI, RateLimitError
+from openai import APIStatusError, AsyncOpenAI, RateLimitError
 
 from src.config import settings
 from src.domain.types import Role
@@ -78,6 +78,11 @@ class OpenRouterProvider(Provider):
         response, headers = await self._call_with_retry(kwargs)
         _log_rate_limits(headers, kwargs["model"])
         await _wait_if_rate_limited(headers, kwargs["model"])
+
+        if not response.choices:
+            error_msg = getattr(response, "error", None) or "empty response from provider"
+            raise RuntimeError(f"LLM returned no choices: {error_msg}")
+
         choice = response.choices[0]
 
         tool_calls = []
