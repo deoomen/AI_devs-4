@@ -22,6 +22,10 @@ def _image_to_data_uri(path_str: str) -> str | None:
     return f"data:{mime};base64,{data}"
 
 
+def _is_url(s: str) -> bool:
+    return s.startswith("http://") or s.startswith("https://")
+
+
 async def _execute(arguments: dict) -> ToolResult:
     path = arguments.get("path", "")
     prompt = arguments.get("prompt", "Describe this image in detail.")
@@ -29,12 +33,16 @@ async def _execute(arguments: dict) -> ToolResult:
     if not path:
         return ToolResult(output="Missing path", is_error=True)
 
-    data_uri = _image_to_data_uri(path)
-    if data_uri is None:
-        return ToolResult(
-            output=f"Cannot read image: {path} (not found or access denied — use inbox/, notes/, or outbox/)",
-            is_error=True,
-        )
+    if _is_url(path):
+        image_url = path
+    else:
+        data_uri = _image_to_data_uri(path)
+        if data_uri is None:
+            return ToolResult(
+                output=f"Cannot read image: {path} (not found or access denied — use inbox/, notes/, or outbox/)",
+                is_error=True,
+            )
+        image_url = data_uri
 
     logger.info("analyze_image {} with prompt: {}", path, prompt)
 
@@ -43,7 +51,7 @@ async def _execute(arguments: dict) -> ToolResult:
         role=Role.USER,
         content=[
             {"type": "text", "text": prompt},
-            {"type": "image_url", "image_url": {"url": data_uri}},
+            {"type": "image_url", "image_url": {"url": image_url}},
         ],
     )
 
@@ -66,17 +74,17 @@ analyze_image_tool = Tool(
     definition=ToolDefinition(
         name="analyze_image",
         description=(
-            "Analyze an image file using a vision model. "
-            "Takes a file path (relative to workspace) and an optional prompt describing what to look for. "
+            "Analyze an image using a vision model. "
+            "Takes an image URL (http/https) or a file path (relative to workspace). "
             "Returns a textual description/analysis of the image. "
-            "The image must first be downloaded to the workspace (e.g. via download_file)."
+            "Prefer passing a URL directly when available — no need to download first."
         ),
         parameters={
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Image file path relative to workspace (e.g. notes/board.png)",
+                    "description": "Image URL (e.g. https://example.com/photo.png) or file path relative to workspace (e.g. notes/board.png)",
                 },
                 "prompt": {
                     "type": "string",
