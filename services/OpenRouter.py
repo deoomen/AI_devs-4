@@ -29,12 +29,13 @@ class OpenRouterClient:
         messages: list[dict],
         model: str | None = None,
     ) -> str:
+        logging.info("OpenRouter request: %s", messages)
         response = await self._openai.chat.completions.create(
             model=model or self.default_model,
             messages=messages,
         )
         content = response.choices[0].message.content
-        log.debug("OpenRouter response: %s", content)
+        log.info("OpenRouter response: %s", content)
         return content
 
     async def vision(
