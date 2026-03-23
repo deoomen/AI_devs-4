@@ -33,7 +33,7 @@ class Mission02(BaseMission):
         await self.report_to_headquarter(answer)
 
     async def _download_and_enrich_power_plant_locations(self) -> None:
-        url = "***REMOVED***/data/{}/findhim_locations.json".format(self.config.aidevs4_headquarters_api_key)
+        url = "{{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/data/{}/findhim_locations.json".format(self.config.aidevs4_headquarters_api_key)
         dest = MISSION_DIR / "findhim_locations.json"
         await self.download_file(url, dest)
 

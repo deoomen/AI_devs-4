@@ -14,7 +14,7 @@ Complete the "people" mission at AIDevs headquarters.
 Find people involved in organizing transports between power plants.
 
 ## Data source
-CSV file: exactly ***REMOVED***/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/people.csv download it and save.
+CSV file: exactly {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/people.csv download it and save.
 Skip placeholder as this is a system feature and will be handle when run.
 
 ## Criteria

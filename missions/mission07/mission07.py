@@ -22,11 +22,11 @@ Cells use format AxB (A=row 1-3 top-down, B=column 1-3 left-right):
 ## Phase 1: Download both images
 
 1. **Reset and download the CURRENT board** — download_file from:
-   ***REMOVED***/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/electricity.png?reset=1
+   {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/electricity.png?reset=1
    Save to notes/electricity_current.png
 
 2. **Download the SOLVED (target) board** — download_file from:
-   ***REMOVED***/i/solved_electricity.png
+   {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/i/solved_electricity.png
    Save to notes/electricity_target.png
 
 ## Phase 2: Analyze both images with vision

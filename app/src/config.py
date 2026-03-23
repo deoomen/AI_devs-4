@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # AIDevs Headquarters
     aidevs4_headquarters_api_key: str = ""
-    aidevs4_headquarters_url: str = "***REMOVED***"
+    aidevs4_headquarters_url: str = ""
 
     # Agent defaults
     agent_default_name: str = "alice"

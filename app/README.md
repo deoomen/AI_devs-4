@@ -264,19 +264,19 @@ This prevents agents from escaping their workspace or accessing other agents' da
 
 Key settings in `.env`:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `debug` | `false` | Enable debug logging |
-| `log_level` | `INFO` | Log level (DEBUG, INFO, WARNING, ERROR) |
-| `api_key` | `change-me` | Bearer token for API auth |
-| `database_url` | `sqlite+aiosqlite:///./agent.db` | Database connection string |
-| `openrouter_api_key` | — | OpenRouter API key (required) |
-| `openrouter_default_chat_model` | `openai/gpt-4.1-mini` | Default LLM chat model |
-| `openrouter_default_vision_model` | `google/gemini-3-flash-preview` | Default vision model |
-| `provider_max_retries` | `3` | Max retries for LLM provider calls |
-| `aidevs4_headquarters_api_key` | — | AIDevs headquarters API key |
-| `aidevs4_headquarters_url` | `***REMOVED***` | AIDevs headquarters URL |
-| `agent_default_name` | `alice` | Default agent when none specified |
-| `agent_workspace_dir` | `workspace` | Runtime workspace directory |
-| `agent_rate_limit_rpm` | `30` | Max requests per minute per user |
-| `agent_max_turns` | `10` | Default max LLM loop iterations |
+| Variable                          | Default                          | Description                             |
+|-----------------------------------|----------------------------------|-----------------------------------------|
+| `debug`                           | `false`                          | Enable debug logging                    |
+| `log_level`                       | `INFO`                           | Log level (DEBUG, INFO, WARNING, ERROR) |
+| `api_key`                         | `change-me`                      | Bearer token for API auth               |
+| `database_url`                    | `sqlite+aiosqlite:///./agent.db` | Database connection string              |
+| `openrouter_api_key`              | —                                | OpenRouter API key (required)           |
+| `openrouter_default_chat_model`   | `openai/gpt-4.1-mini`            | Default LLM chat model                  |
+| `openrouter_default_vision_model` | `google/gemini-3-flash-preview`  | Default vision model                    |
+| `provider_max_retries`            | `3`                              | Max retries for LLM provider calls      |
+| `aidevs4_headquarters_api_key`    | —                                | AIDevs headquarters API key             |
+| `aidevs4_headquarters_url`        | -                                | AIDevs headquarters URL                 |
+| `agent_default_name`              | `alice`                          | Default agent when none specified       |
+| `agent_workspace_dir`             | `workspace`                      | Runtime workspace directory             |
+| `agent_rate_limit_rpm`            | `30`                             | Max requests per minute per user        |
+| `agent_max_turns`                 | `10`                             | Default max LLM loop iterations         |

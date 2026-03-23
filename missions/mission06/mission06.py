@@ -13,7 +13,7 @@ Complete the "categorize" mission. You must classify 10 items as dangerous (DNG)
 ## Steps
 
 1. **Reset** — send to aidevs_headquarters: task="categorize", answer={"prompt": "reset"}
-2. **Download CSV** — download from: ***REMOVED***/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/categorize.csv
+2. **Download CSV** — download from: {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/categorize.csv
 3. **Read the CSV** — each row has an id and a description
 4. **For EACH row**, build a concrete prompt with that row's id and description baked in, then send it:
    - aidevs_headquarters: task="categorize", answer={"prompt": "your prompt with actual id and description for this row"}

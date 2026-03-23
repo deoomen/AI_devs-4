@@ -19,7 +19,7 @@ Plant ID: PWR6132PL
 - **Terrain map** (PNG image with grid): {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/data/{{AIDEVS4_HEADQUARTERS_API_KEY}}/drone.png
   - Divided into sectors by a grid. Dam area has intensified water color.
   - Rows and columns are 1-indexed.
-- **Drone API documentation** (HTML): ***REMOVED***/dane/drone.html
+- **Drone API documentation** (HTML): {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/dane/drone.html
   - WARNING: The docs contain many conflicting function names — traps. Focus only on what's needed for the mission.
 
 ## Strategy
@@ -35,7 +35,7 @@ Plant ID: PWR6132PL
    - Write findings to outbox/ file.
 
 2. **Spawn bob** (researcher) with this task:
-   - Download the drone API documentation from ***REMOVED***/dane/drone.html
+   - Download the drone API documentation from {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/dane/drone.html
    - Read and analyze the HTML documentation.
    - Identify which API functions/instructions are needed to: configure the drone, set a target sector, and launch the mission.
    - The docs are full of traps — many conflicting function names. Focus only on what's essential for a bombing mission.

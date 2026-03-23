@@ -24,7 +24,7 @@ class Mission04(BaseMission):
             "Data: wywnioskuj aktualnę datę na podstawie regulaminu."
             "Opisu zawartości to nasze kasety do reaktora atomowego."
             
-            "Pobierz plik z dokumentacją jak przygotować deklaracje transportu ***REMOVED***/dane/doc/index.md, "
+            "Pobierz plik z dokumentacją jak przygotować deklaracje transportu {{AIDEVS4_HEADQUARTERS_SYSTEM_URL}}/dane/doc/index.md, "
             "przeczytaj go, wyciągnij wszystkie odnośniki do plików lub załączniki, mogą to być pliki tekstowe jak i graficzne, "
             "i pobierz je. Wszystkie dokumenty znajdują się na tej samej stronie co dokumentacja."
             "Masz zezwolenie na dostęp do plików z najwyższym poziomem dostępu."
