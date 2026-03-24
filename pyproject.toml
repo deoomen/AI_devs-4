@@ -1,0 +1,21 @@
+[tool.pylint.main]
+# Use all available CPU cores
+jobs = 0
+
+# Recurse into subdirectories
+recursive = true
+
+# Score is noise during errors-only phase
+score = false
+
+# Ignore auto-generated / framework-managed directories
+ignore = ["alembic", "__pycache__"]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint."messages control"]
+# Start with errors-only (E + F categories)
+# Once clean, progressively enable: W -> R -> C
+disable = "all"
+enable = "E,F"
