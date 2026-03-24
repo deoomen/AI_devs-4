@@ -17,7 +17,7 @@ if [ ! -x "$PYLINT" ]; then
     exit 0
 fi
 
-echo "pre-push: running pylint (errors + fatal only)..."
+echo "pre-push: running pylint..."
 
 if ! "$PYLINT" app/ services/ missions/ config.py main.py; then
     echo ""
