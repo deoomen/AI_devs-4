@@ -8,7 +8,7 @@ from src.config import settings
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
 
-ZMAIL_URL = f"{settings.aidevs4_headquarters_url}/api/zmail"
+ZMAIL_URL = f"{settings.aidevs4_headquarters_system_url}/api/zmail"
 DEFAULT_TIMEOUT = 30.0
 
 

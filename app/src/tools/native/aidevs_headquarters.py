@@ -19,7 +19,7 @@ async def _execute(arguments: dict) -> ToolResult:
     if not task:
         return ToolResult(output="Missing task name", is_error=True)
 
-    url = f"{settings.aidevs4_headquarters_url}{endpoint}"
+    url = f"{settings.aidevs4_headquarters_system_url}{endpoint}"
     payload = {
         "apikey": settings.aidevs4_headquarters_api_key,
         "task": task,

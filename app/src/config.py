@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # AIDevs Headquarters
     aidevs4_headquarters_api_key: str = ""
-    aidevs4_headquarters_url: str = ""
+    aidevs4_headquarters_system_url: str = ""
 
     # Agent defaults
     agent_default_name: str = "alice"
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # Only listed keys are resolved in user messages.
     template_whitelist: dict[str, str] = {
         "AIDEVS4_HEADQUARTERS_API_KEY": "aidevs4_headquarters_api_key",
-        "AIDEVS4_HEADQUARTERS_SYSTEM_URL": "aidevs4_headquarters_url",
+        "AIDEVS4_HEADQUARTERS_SYSTEM_URL": "aidevs4_headquarters_system_url",
     }
 
     def get_template_vars(self) -> dict[str, str]:
