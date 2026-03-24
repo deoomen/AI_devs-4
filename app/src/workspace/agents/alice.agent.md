@@ -1,13 +1,13 @@
 ---
 name: alice
-description: "General-purpose assistant — orchestrates tasks, communicates with external APIs"
-model: "openai/gpt-5-mini"
+description: General-purpose assistant — orchestrates tasks, communicates with external APIs
+model: anthropic/claude-sonnet-4.6
 tools:
   - aidevs_headquarters
   - ask_user
+  - http_request
   - list_files
   - read_file
-  - spawn_agent
   - think
   - write_file
 max_turns: 50
