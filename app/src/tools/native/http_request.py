@@ -1,5 +1,6 @@
 import asyncio
 import json
+from urllib.parse import urlparse
 
 import httpx
 from loguru import logger
@@ -57,6 +58,10 @@ async def _execute(arguments: dict) -> ToolResult:
         return ToolResult(output=f"Invalid method: {method}", is_error=True)
     if not url:
         return ToolResult(output="Missing url", is_error=True)
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return ToolResult(output=f"Invalid URL: {url}", is_error=True)
 
     logger.debug("http_request {} {}", method, url)
 
