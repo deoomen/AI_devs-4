@@ -1,4 +1,3 @@
-import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -8,6 +7,7 @@ from src.api.deps import check_rate_limit, get_runtime
 from src.api.schemas import AgentResponse, ChatRequest, DeliverRequest
 from src.domain.agent import Agent, AgentConfig
 from src.domain.entry import Entry
+from src.domain.ids import AgentId, EntryId
 from src.domain.session import Session
 from src.domain.types import AgentStatus, EntryType, Role
 from src.errors import AppError, ErrorCode, error_envelope
@@ -31,6 +31,7 @@ async def completions(
         return JSONResponse(status_code=404, content=error_envelope(err))
 
     # Create session
+    ctx.user_id = user.id
     session = Session(id=ctx.session_id, user_id=user.id)
     await ctx.repos.sessions.create(session)
 
@@ -39,7 +40,7 @@ async def completions(
     ws.setup()
 
     # Create agent
-    agent_id = str(uuid.uuid4())
+    agent_id = AgentId.generate()
     agent_ws = ws.create_agent_dir(agent_id)
     agent = Agent(
         id=agent_id,
@@ -53,7 +54,7 @@ async def completions(
 
     # Store user message
     user_entry = Entry(
-        id=str(uuid.uuid4()),
+        id=EntryId.generate(),
         session_id=ctx.session_id,
         agent_id=agent.id,
         turn=0,
@@ -66,7 +67,7 @@ async def completions(
 
     # Run agent
     try:
-        agent = await run_agent(ctx, agent, user_id=user.id, user_input=req.input)
+        agent = await run_agent(ctx, agent, user_input=req.input)
     except Exception as e:
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
@@ -78,7 +79,7 @@ async def completions(
         return JSONResponse(
             status_code=202,
             content=AgentResponse(
-                agent_id=agent.id,
+                agent_id=str(agent.id),
                 status=agent.status.value,
                 output=last_text,
                 waiting_for=[
@@ -89,7 +90,7 @@ async def completions(
         )
 
     return AgentResponse(
-        agent_id=agent.id,
+        agent_id=str(agent.id),
         status=agent.status.value,
         output=last_text,
     )
@@ -102,7 +103,8 @@ async def deliver(
     user=Depends(check_rate_limit),
     ctx: RuntimeContext = Depends(get_runtime),
 ):
-    agent = await ctx.repos.agents.get(agent_id)
+    ctx.user_id = user.id
+    agent = await ctx.repos.agents.get(AgentId(agent_id))
     if agent is None:
         err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
@@ -127,7 +129,7 @@ async def deliver(
         return JSONResponse(
             status_code=202,
             content=AgentResponse(
-                agent_id=agent.id,
+                agent_id=str(agent.id),
                 status=agent.status.value,
                 output=last_text,
                 waiting_for=[
@@ -138,7 +140,7 @@ async def deliver(
         )
 
     return AgentResponse(
-        agent_id=agent.id,
+        agent_id=str(agent.id),
         status=agent.status.value,
         output=last_text,
     )
@@ -150,7 +152,7 @@ async def get_agent_status(
     user=Depends(check_rate_limit),
     ctx: RuntimeContext = Depends(get_runtime),
 ):
-    agent = await ctx.repos.agents.get(agent_id)
+    agent = await ctx.repos.agents.get(AgentId(agent_id))
     if agent is None:
         err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
@@ -159,7 +161,7 @@ async def get_agent_status(
     last_text = _extract_last_assistant_text(entries)
 
     return AgentResponse(
-        agent_id=agent.id,
+        agent_id=str(agent.id),
         status=agent.status.value,
         output=last_text,
         waiting_for=[

@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+
+from .ids import AgentId, SessionId
 from .types import AgentStatus, WaitType
 
 
@@ -21,14 +23,14 @@ class AgentConfig:
 
 @dataclass
 class Agent:
-    id: str
-    session_id: str
+    id: AgentId
+    session_id: SessionId
     status: AgentStatus
     config: AgentConfig
     turn_count: int = 0
     waiting_for: list[WaitEntry] = field(default_factory=list)
     workspace_path: str | None = None
-    parent_agent_id: str | None = None
+    parent_agent_id: AgentId | None = None
 
 
 # Pure state transitions

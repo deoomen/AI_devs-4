@@ -2,6 +2,7 @@ import contextvars
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.domain.ids import AgentId, SessionId, UserId
 from src.events.emitter import EventEmitter
 from src.providers.types import Provider
 from src.repositories import Repositories
@@ -14,13 +15,14 @@ _current_ctx: contextvars.ContextVar["RuntimeContext | None"] = contextvars.Cont
 
 @dataclass
 class RuntimeContext:
-    session_id: str
+    session_id: SessionId
     repos: Repositories
     provider: Provider
     tools: ToolRegistry
     events: EventEmitter
+    user_id: UserId | None = None
     agent_workspace: Path | None = None
-    agent_id: str | None = None
+    agent_id: AgentId | None = None
 
 
 def set_runtime_context(ctx: RuntimeContext) -> None:

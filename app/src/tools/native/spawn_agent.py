@@ -1,11 +1,11 @@
 import shutil
-import uuid
 from pathlib import Path
 
 from loguru import logger
 
 from src.domain.agent import Agent
 from src.domain.entry import Entry
+from src.domain.ids import AgentId, EntryId
 from src.domain.types import AgentStatus, EntryType, Role, ToolType
 from src.runtime.context import get_runtime_context
 from src.tools.workspace import get_workspace_root, set_workspace_root
@@ -130,8 +130,8 @@ async def _execute(arguments: dict) -> ToolResult:
 
     # Create isolated child workspace
     ws = SessionWorkspace(ctx.session_id)
-    agent_id = str(uuid.uuid4())
-    short_id = agent_id.replace("-", "")[:8]
+    agent_id = AgentId.generate()
+    short_id = agent_id.short()
     child_workspace = ws.create_agent_dir(agent_id)
 
     # Copy input files from parent workspace into child's inbox
@@ -153,7 +153,7 @@ async def _execute(arguments: dict) -> ToolResult:
     # Add user message
     seq = await ctx.repos.entries.next_sequence(agent_id)
     entry = Entry(
-        id=str(uuid.uuid4()),
+        id=EntryId.generate(),
         session_id=ctx.session_id,
         agent_id=agent_id,
         turn=0,
@@ -169,7 +169,7 @@ async def _execute(arguments: dict) -> ToolResult:
     # Set child workspace on context and run subagent
     ctx.agent_workspace = child_workspace
     from src.runtime.runner import run_agent
-    agent = await run_agent(ctx, agent, user_id="subagent")
+    agent = await run_agent(ctx, agent)
 
     # Restore parent context
     ctx.agent_workspace = parent_workspace

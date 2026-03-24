@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from .ids import UserId
+
 
 @dataclass
 class User:
-    id: str
+    id: UserId
     email: str
     api_key_hash: str

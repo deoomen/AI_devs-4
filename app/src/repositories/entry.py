@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import EntryRow
 from src.domain.entry import Entry
+from src.domain.ids import AgentId
 from src.domain.types import EntryType, Role
 
 
@@ -51,7 +52,7 @@ class EntryRepository:
         await self._db.flush()
         return entry
 
-    async def list_by_agent(self, agent_id: str) -> list[Entry]:
+    async def list_by_agent(self, agent_id: AgentId) -> list[Entry]:
         result = await self._db.execute(
             select(EntryRow)
             .where(EntryRow.agent_id == agent_id)
@@ -59,7 +60,7 @@ class EntryRepository:
         )
         return [_entry_from_row(row) for row in result.scalars().all()]
 
-    async def next_sequence(self, agent_id: str) -> int:
+    async def next_sequence(self, agent_id: AgentId) -> int:
         result = await self._db.execute(
             select(func.coalesce(func.max(EntryRow.sequence), -1))
             .where(EntryRow.agent_id == agent_id)

@@ -1,12 +1,14 @@
 from dataclasses import dataclass, field
+
+from .ids import AgentId, EntryId, SessionId
 from .types import EntryType, Role
 
 
 @dataclass
 class Entry:
-    id: str
-    session_id: str
-    agent_id: str
+    id: EntryId
+    session_id: SessionId
+    agent_id: AgentId
     turn: int
     sequence: int
     type: EntryType

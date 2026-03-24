@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from src.config import settings
+from src.domain.ids import UserId
 
 
 @dataclass
@@ -25,9 +26,9 @@ class RateLimiter:
         self._rpm = rpm or settings.agent_rate_limit_rpm
         self._windows: dict[str, _Window] = defaultdict(_Window)
 
-    def check(self, user_id: str) -> RateLimitInfo:
+    def check(self, user_id: UserId) -> RateLimitInfo:
         now = time.monotonic()
-        window = self._windows[user_id]
+        window = self._windows[str(user_id)]
         if now >= window.reset_at:
             window.count = 0
             window.reset_at = now + 60.0

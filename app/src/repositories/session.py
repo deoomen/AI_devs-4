@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import SessionRow
+from src.domain.ids import SessionId
 from src.domain.session import Session
 from src.domain.types import SessionStatus
 
@@ -16,7 +17,7 @@ class SessionRepository:
         await self._db.flush()
         return session
 
-    async def get(self, session_id: str) -> Session | None:
+    async def get(self, session_id: SessionId) -> Session | None:
         result = await self._db.execute(
             select(SessionRow).where(SessionRow.id == session_id)
         )

@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.db.engine import async_session_factory
+from src.domain.ids import SessionId
 from src.domain.user import User
 from src.events.emitter import EventEmitter
 from src.events.logger import log_event
@@ -32,11 +33,10 @@ _event_emitter = _build_event_emitter()
 
 
 async def get_runtime() -> RuntimeContext:
-    import uuid
     async with async_session_factory() as db:
         repos = create_repositories(db)
         ctx = RuntimeContext(
-            session_id=str(uuid.uuid4()),
+            session_id=SessionId.generate(),
             repos=repos,
             provider=_provider,
             tools=_tool_registry,

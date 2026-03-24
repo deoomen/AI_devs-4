@@ -1,6 +1,5 @@
 import json
 import time
-import uuid
 
 from src.domain.agent import (
     Agent,
@@ -11,6 +10,7 @@ from src.domain.agent import (
     wait_for,
 )
 from src.domain.entry import Entry
+from src.domain.ids import AgentId, EntryId, SessionId
 from src.domain.types import AgentStatus, EntryType, Role, ToolType, WaitType
 from loguru import logger
 
@@ -61,18 +61,18 @@ def _messages_to_dicts(messages: list[ProviderMessage]) -> list[dict]:
     return result
 
 
-def _bind_log_context(session_id: str, agent_id: str, agent_name: str) -> None:
+def _bind_log_context(session_id: SessionId, agent_id: AgentId, agent_name: str) -> None:
     """Bind session/agent info to loguru context for all subsequent log calls."""
     logger.configure(extra={
-        "session_id": session_id[:8],
-        "agent_id": agent_id[:8],
+        "session_id": session_id.short(),
+        "agent_id": agent_id.short(),
         "agent_name": agent_name,
     })
 
 
-async def _store_entry(ctx: RuntimeContext, agent_id: str, turn: int, **kwargs) -> Entry:
+async def _store_entry(ctx: RuntimeContext, agent_id: AgentId, turn: int, **kwargs) -> Entry:
     seq = await ctx.repos.entries.next_sequence(agent_id)
-    entry = Entry(id=str(uuid.uuid4()), session_id=ctx.session_id, agent_id=agent_id, turn=turn, sequence=seq, **kwargs)
+    entry = Entry(id=EntryId.generate(), session_id=ctx.session_id, agent_id=agent_id, turn=turn, sequence=seq, **kwargs)
     await ctx.repos.entries.create(entry)
     return entry
 
@@ -80,7 +80,6 @@ async def _store_entry(ctx: RuntimeContext, agent_id: str, turn: int, **kwargs) 
 async def run_agent(
     ctx: RuntimeContext,
     agent: Agent,
-    user_id: str = "",
     user_input: str = "",
 ) -> Agent:
     """Main agent loop. Returns agent in COMPLETED or WAITING state."""
@@ -99,8 +98,8 @@ async def run_agent(
             data={
                 "agent_name": agent.config.name,
                 "model": agent.config.model,
-                "session_id": agent.session_id,
-                "user_id": user_id,
+                "session_id": str(agent.session_id),
+                "user_id": str(ctx.user_id) if ctx.user_id else None,
                 "user_input": user_input,
             },
         ))

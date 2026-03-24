@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import AgentRow
 from src.domain.agent import Agent, AgentConfig, WaitEntry
+from src.domain.ids import AgentId, SessionId
 from src.domain.types import AgentStatus, WaitType
 
 
@@ -64,7 +65,7 @@ class AgentRepository:
         await self._db.flush()
         return agent
 
-    async def get(self, agent_id: str) -> Agent | None:
+    async def get(self, agent_id: AgentId) -> Agent | None:
         result = await self._db.execute(
             select(AgentRow).where(AgentRow.id == agent_id)
         )

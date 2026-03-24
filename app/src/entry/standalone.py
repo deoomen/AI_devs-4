@@ -3,13 +3,14 @@
 Not meant to be run directly — use `python main.py run` or import StandaloneAgent.
 """
 
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 from src.db.engine import async_session_factory
+from src.db.seed import STANDALONE_USER_ID
 from src.domain.agent import Agent, WaitEntry
 from src.domain.entry import Entry
+from src.domain.ids import AgentId, EntryId, SessionId
 from src.domain.session import Session
 from src.domain.types import AgentStatus, EntryType, Role
 from src.events.emitter import EventEmitter
@@ -35,7 +36,7 @@ def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
 
 @dataclass
 class AgentResult:
-    agent_id: str
+    agent_id: AgentId
     status: AgentStatus
     output: str | None
     waiting_for: list[WaitEntry] | None = None
@@ -46,8 +47,8 @@ class StandaloneAgent:
 
     def __init__(self, agent_name: str):
         self._agent_name = agent_name
-        self._session_id = str(uuid.uuid4())
-        self._agent_id: str | None = None
+        self._session_id = SessionId.generate()
+        self._agent_id: AgentId | None = None
         self._session_created = False
         self._tools = ToolRegistry.build_default()
         self._provider = OpenRouterProvider()
@@ -56,7 +57,7 @@ class StandaloneAgent:
         subscribe_langfuse(self._events)
 
     @property
-    def session_id(self) -> str:
+    def session_id(self) -> SessionId:
         return self._session_id
 
     def _build_ctx(self, repos) -> RuntimeContext:
@@ -64,6 +65,7 @@ class StandaloneAgent:
             session_id=self._session_id,
             repos=repos, provider=self._provider,
             tools=self._tools, events=self._events,
+            user_id=STANDALONE_USER_ID,
         )
 
     async def send(self, message: str) -> AgentResult:
@@ -111,7 +113,7 @@ class StandaloneAgent:
 
     async def _ensure_session(self, ctx: RuntimeContext) -> None:
         if not self._session_created:
-            session = Session(id=self._session_id, user_id="standalone")
+            session = Session(id=self._session_id, user_id=STANDALONE_USER_ID)
             await ctx.repos.sessions.create(session)
             self._session_created = True
 
@@ -125,7 +127,7 @@ class StandaloneAgent:
         ws = SessionWorkspace(self._session_id)
         ws.setup()
 
-        agent_id = str(uuid.uuid4())
+        agent_id = AgentId.generate()
         agent_ws = ws.create_agent_dir(agent_id)
         agent = Agent(
             id=agent_id,
@@ -159,7 +161,7 @@ class StandaloneAgent:
     async def _add_user_message(self, ctx: RuntimeContext, agent: Agent, message: str) -> None:
         seq = await ctx.repos.entries.next_sequence(agent.id)
         entry = Entry(
-            id=str(uuid.uuid4()),
+            id=EntryId.generate(),
             session_id=ctx.session_id,
             agent_id=agent.id,
             turn=agent.turn_count,
@@ -171,7 +173,7 @@ class StandaloneAgent:
         await ctx.repos.entries.create(entry)
 
     async def _run_and_collect(self, ctx: RuntimeContext, agent: Agent, user_input: str = "") -> AgentResult:
-        agent = await run_agent(ctx, agent, user_id="standalone", user_input=user_input)
+        agent = await run_agent(ctx, agent, user_input=user_input)
         entries = await ctx.repos.entries.list_by_agent(agent.id)
         return AgentResult(
             agent_id=agent.id,
