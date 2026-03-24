@@ -110,7 +110,8 @@ class Mission11(BaseMission):
 
     def _fetch_unique_note_fragments(self, sensors_dir: Path) -> list[str]:
         if (MISSION_WORKSPACE_DIR / "unique_note_fragments.json").exists():
-            return json.loads(open(MISSION_WORKSPACE_DIR / "unique_note_fragments.json").read())
+            with open(MISSION_WORKSPACE_DIR / "unique_note_fragments.json", encoding="utf-8") as f:
+                return json.loads(f.read())
 
         note_fragments = set()
         for file in sensors_dir.glob("*.json"):
@@ -120,7 +121,8 @@ class Mission11(BaseMission):
             note_fragments.update(fragments)
 
         note_fragments = list(note_fragments)
-        json.dump(note_fragments, open(MISSION_WORKSPACE_DIR / "unique_note_fragments.json", "w"), indent=2)
+        with open(MISSION_WORKSPACE_DIR / "unique_note_fragments.json", "w", encoding="utf-8") as f:
+            json.dump(note_fragments, f, indent=2)
 
         return note_fragments
 

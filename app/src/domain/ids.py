@@ -21,7 +21,7 @@ class AbstractId(uuid.UUID):
         return self.hex[:8]
 
     @classmethod
-    def __get_pydantic_core_schema__(cls, source_type, handler: GetCoreSchemaHandler):
+    def __get_pydantic_core_schema__(cls, _source_type, _handler: GetCoreSchemaHandler):
         return core_schema.no_info_plain_validator_function(
             cls._pydantic_validate,
             serialization=core_schema.to_string_ser_schema(),

@@ -17,5 +17,5 @@ def home():
     return {"message": "Hello Agent 5!"}
 
 @app.post("/proxy-agent")
-async def proxy_agent_endpoint(input: OperatorMessage) -> AgentMessage:
+async def proxy_agent_endpoint(input: OperatorMessage) -> AgentMessage:  # pylint: disable=redefined-builtin
     return await agent.handle_message(input)

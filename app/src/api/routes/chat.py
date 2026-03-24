@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.deps import check_rate_limit, get_runtime
 from src.api.schemas import AgentResponse, ChatRequest, DeliverRequest
-from src.domain.agent import Agent, AgentConfig
+from src.domain.agent import Agent
 from src.domain.entry import Entry
 from src.domain.ids import AgentId, EntryId
 from src.domain.session import Session
@@ -68,7 +68,7 @@ async def completions(
     # Run agent
     try:
         agent = await run_agent(ctx, agent, user_input=req.input)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
@@ -118,7 +118,7 @@ async def deliver(
 
     try:
         agent = await deliver_result(ctx, agent, req.call_id, req.output)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         err = AppError(message=str(e), status_code=500, code=ErrorCode.AGENT_ERROR)
         return JSONResponse(status_code=500, content=error_envelope(err))
 
@@ -149,7 +149,7 @@ async def deliver(
 @router.get("/agents/{agent_id}")
 async def get_agent_status(
     agent_id: AgentId,
-    user=Depends(check_rate_limit),
+    user=Depends(check_rate_limit),  # pylint: disable=unused-argument
     ctx: RuntimeContext = Depends(get_runtime),
 ):
     agent = await ctx.repos.agents.get(agent_id)

@@ -15,7 +15,12 @@ ignore = ["alembic", "__pycache__"]
 max-line-length = 120
 
 [tool.pylint."messages control"]
-# Start with errors-only (E + F categories)
-# Once clean, progressively enable: W -> R -> C
+# Phase 2: errors + warnings
+# Progressively enable: R -> C for next phases
 disable = "all"
-enable = "E,F"
+enable = "E,F,W"
+
+# Suppress noisy warnings that are acceptable in this project
+[tool.pylint.basic]
+# Allow TODO comments without triggering fixme warnings
+notes = []

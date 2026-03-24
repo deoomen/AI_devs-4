@@ -21,10 +21,10 @@ async def main() -> None:
             mission = mission_class()
             await mission.run()
 
-        except ModuleNotFoundError:
-            raise RuntimeError('Unknown mission "{}"'.format(mission_number))
+        except ModuleNotFoundError as exc:
+            raise RuntimeError('Unknown mission "{}"'.format(mission_number)) from exc
 
-    except Exception as exception:
+    except Exception as exception:  # pylint: disable=broad-exception-caught
         logging.exception(exception)
         exit(1)
 

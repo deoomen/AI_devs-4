@@ -37,7 +37,7 @@ class AIdevs4:
                     'answer': answer,
                 }
             )
-        logging.info('Answer sent: {}'.format(answer))
+        logging.info('Answer sent: %s', answer)
         json = self.parse_response(response)
 
         logging.info(json['message'])
@@ -62,7 +62,7 @@ class AIdevs4:
                     'surname': surname,
                 }
             )
-        logging.info('Location requested: {} {}'.format(name, surname))
+        logging.info('Location requested: %s %s', name, surname)
         json = response.json()
 
         return json
@@ -79,7 +79,7 @@ class AIdevs4:
                     'birthYear': birth_year,
                 }
             )
-        logging.info('Access level requested: {} {}'.format(name, surname))
+        logging.info('Access level requested: %s %s', name, surname)
         json = response.json()
 
         return json
@@ -95,7 +95,7 @@ class AIdevs4:
                     'packageid': packageid,
                 }
             )
-        logging.info('Packages requested: {}'.format(packageid))
+        logging.info('Packages requested: %s', packageid)
         json = response.json()
 
         return json
@@ -113,7 +113,7 @@ class AIdevs4:
                     'code': code,
                 }
             )
-        logging.info('Packages redirect requested: {} to {}'.format(packageid, destination))
+        logging.info('Packages redirect requested: %s to %s', packageid, destination)
         json = response.json()
 
         return json

@@ -1,7 +1,6 @@
 import instructor
 import logging
 from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 from typing import TypeVar
 

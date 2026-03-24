@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .ids import AgentId, EntryId, SessionId
 from .types import EntryType, Role

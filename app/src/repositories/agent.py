@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import AgentRow
 from src.domain.agent import Agent, AgentConfig, WaitEntry
-from src.domain.ids import AgentId, SessionId
+from src.domain.ids import AgentId
 from src.domain.types import AgentStatus, WaitType
 
 

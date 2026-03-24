@@ -85,7 +85,6 @@ def _copy_outbox_to_parent_inbox(
 
 
 def _build_result_text(
-    agent_name: str,
     short_id: str,
     output: str | None,
     bridged_files: list[str],
@@ -191,7 +190,7 @@ async def _execute(arguments: dict) -> ToolResult:
     entries = await ctx.repos.entries.list_by_agent(agent.id)
     output = _extract_last_assistant_text(entries)
 
-    result_text = _build_result_text(agent_name, short_id, output, bridged_files)
+    result_text = _build_result_text(short_id, output, bridged_files)
 
     if agent.status == AgentStatus.COMPLETED:
         logger.info("Subagent '{}' completed", agent_name)

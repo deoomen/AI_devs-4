@@ -22,18 +22,18 @@ def _estimate_content_chars(content: "Content | None") -> int:
 
 
 @overload
-def estimate_tokens(input: str) -> int: ...
+def estimate_tokens(content: str) -> int: ...
 @overload
-def estimate_tokens(input: "list[ProviderMessage]", tools: list[dict] | None = None) -> int: ...
+def estimate_tokens(content: "list[ProviderMessage]", tools: list[dict] | None = None) -> int: ...
 
 
-def estimate_tokens(input, tools=None) -> int:
+def estimate_tokens(content, tools=None) -> int:
     """Estimate token count for plain text or LLM messages + tool definitions."""
-    if isinstance(input, str):
-        return int(len(input) / CHARS_PER_TOKEN)
+    if isinstance(content, str):
+        return int(len(content) / CHARS_PER_TOKEN)
 
     chars = 0
-    for msg in input:
+    for msg in content:
         chars += _estimate_content_chars(msg.content)
         if msg.tool_calls:
             chars += len(json.dumps(msg.tool_calls))

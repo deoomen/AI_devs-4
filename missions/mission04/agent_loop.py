@@ -95,7 +95,7 @@ async def _read_file(path: str, llm: "OpenRouterClient") -> dict:
         content = p.read_text(encoding="utf-8", errors="replace")
         truncated = len(content) > 100_000
         return {"content": content[:100_000], "truncated": truncated}
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-exception-caught
         return {"error": str(exc)}
 
 

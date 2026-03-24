@@ -52,7 +52,7 @@ class _InterceptHandler(logging.Handler):
         except ValueError:
             level = record.levelno
 
-        frame, depth = sys._getframe(6), 6
+        frame, depth = sys._getframe(6), 6  # pylint: disable=protected-access
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
@@ -121,7 +121,7 @@ def setup_logging(level: str = "INFO") -> None:
         retention="7 days",
         compression=None,
         encoding="utf-8",
-        filter=lambda record: _redact_record(record),
+        filter=_redact_record,
     )
 
     # Redirect stdlib logging through loguru

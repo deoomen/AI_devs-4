@@ -31,8 +31,8 @@ async def _run(agent_name: str, message: str) -> None:
             logger.info("Agent asks: {}", result.output)
             answer = input(f"[{wait.tool_name}] Your answer: ")
             result = await agent.deliver(wait.call_id, answer)
-    else:
-        logger.info("Agent finished (status={}): {}", result.status, result.output)
+
+    logger.info("Agent finished (status={}): {}", result.status, result.output)
 
 
 def main() -> None:

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
@@ -17,7 +16,7 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-class IdColumn(TypeDecorator):
+class IdColumn(TypeDecorator):  # pylint: disable=abstract-method
     """Maps domain Id value objects to String(36) in the database."""
 
     impl = String(36)

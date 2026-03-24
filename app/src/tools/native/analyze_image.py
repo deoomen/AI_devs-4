@@ -59,7 +59,7 @@ async def _execute(arguments: dict) -> ToolResult:
         response = await provider.chat(
             messages=[message],
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Vision API call failed: {}", e)
         return ToolResult(output=f"Vision API error: {e}", is_error=True)
 

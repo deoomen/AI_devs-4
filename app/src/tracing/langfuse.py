@@ -35,7 +35,7 @@ def _init_client() -> "Langfuse | None":
     except ImportError:
         logger.warning("langfuse package not installed — tracing disabled")
         return None
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("Failed to initialize Langfuse: {}", exc)
         return None
 
@@ -44,7 +44,7 @@ _client: Langfuse | None = None
 
 
 def get_langfuse() -> "Langfuse | None":
-    global _client
+    global _client  # pylint: disable=global-statement
     if _client is None:
         _client = _init_client()
     return _client
