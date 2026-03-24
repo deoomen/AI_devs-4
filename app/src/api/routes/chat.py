@@ -79,7 +79,7 @@ async def completions(
         return JSONResponse(
             status_code=202,
             content=AgentResponse(
-                agent_id=str(agent.id),
+                agent_id=agent.id,
                 status=agent.status.value,
                 output=last_text,
                 waiting_for=[
@@ -90,7 +90,7 @@ async def completions(
         )
 
     return AgentResponse(
-        agent_id=str(agent.id),
+        agent_id=agent.id,
         status=agent.status.value,
         output=last_text,
     )
@@ -98,13 +98,13 @@ async def completions(
 
 @router.post("/agents/{agent_id}/deliver")
 async def deliver(
-    agent_id: str,
+    agent_id: AgentId,
     req: DeliverRequest,
     user=Depends(check_rate_limit),
     ctx: RuntimeContext = Depends(get_runtime),
 ):
     ctx.user_id = user.id
-    agent = await ctx.repos.agents.get(AgentId(agent_id))
+    agent = await ctx.repos.agents.get(agent_id)
     if agent is None:
         err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
@@ -129,7 +129,7 @@ async def deliver(
         return JSONResponse(
             status_code=202,
             content=AgentResponse(
-                agent_id=str(agent.id),
+                agent_id=agent.id,
                 status=agent.status.value,
                 output=last_text,
                 waiting_for=[
@@ -140,7 +140,7 @@ async def deliver(
         )
 
     return AgentResponse(
-        agent_id=str(agent.id),
+        agent_id=agent.id,
         status=agent.status.value,
         output=last_text,
     )
@@ -148,11 +148,11 @@ async def deliver(
 
 @router.get("/agents/{agent_id}")
 async def get_agent_status(
-    agent_id: str,
+    agent_id: AgentId,
     user=Depends(check_rate_limit),
     ctx: RuntimeContext = Depends(get_runtime),
 ):
-    agent = await ctx.repos.agents.get(AgentId(agent_id))
+    agent = await ctx.repos.agents.get(agent_id)
     if agent is None:
         err = AppError(message="Agent not found", status_code=404, code=ErrorCode.NOT_FOUND)
         return JSONResponse(status_code=404, content=error_envelope(err))
@@ -161,7 +161,7 @@ async def get_agent_status(
     last_text = _extract_last_assistant_text(entries)
 
     return AgentResponse(
-        agent_id=str(agent.id),
+        agent_id=agent.id,
         status=agent.status.value,
         output=last_text,
         waiting_for=[

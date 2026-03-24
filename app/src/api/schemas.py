@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 
 from src.config import settings
+from src.domain.ids import AgentId, SessionId
 
 
 class ChatRequest(BaseModel):
     agent: str = settings.agent_default_name
     input: str
-    session_id: str | None = None
+    session_id: SessionId | None = None
 
 
 class DeliverRequest(BaseModel):
@@ -15,7 +16,7 @@ class DeliverRequest(BaseModel):
 
 
 class AgentResponse(BaseModel):
-    agent_id: str
+    agent_id: AgentId
     status: str
     output: str | None = None
     waiting_for: list[dict] | None = None
