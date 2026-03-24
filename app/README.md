@@ -13,7 +13,7 @@ app/                    # Root directory
 │   ├── api/            # HTTP layer (schemas, dependency injection)
 │   │   └── routes/     # FastAPI route handlers (chat, health)
 │   ├── db/             # Async SQLAlchemy engine, ORM models, seeding
-│   ├── domain/         # Core entities (Agent, Session, Entry, User) and enums
+│   ├── domain/         # Core entities (Agent, Session, Entry, User), enums, ID value objects
 │   ├── entry/          # Entry points (HTTP server, standalone runner)
 │   ├── events/         # Pub/sub event emitter, handlers, event types
 │   ├── middleware/     # Auth (Bearer token) and per-user rate limiting
@@ -22,27 +22,44 @@ app/                    # Root directory
 │   ├── runtime/        # Agent execution loop, runtime context
 │   ├── tools/          # Tool registry, template resolution, workspace path safety
 │   │   └── native/     # Built-in tools (see Available Tools below)
+│   ├── tracing/        # Langfuse observability integration
+│   ├── utils/          # Shared utilities (token estimation)
 │   ├── workspace/      # Agent config loader and session workspace management
 │   │   └── agents/     # Agent definitions (YAML frontmatter + system prompt)
-│   ├── workspace/      # Runtime data (date-based session directories)
 │   ├── config.py       # Pydantic settings (loads .env)
 │   ├── errors.py       # Application error types
 │   └── log.py          # Logging setup (loguru)
-└main.py                # CLI entry point (server, run agent one-shot)
+├── workspace/          # Runtime data (date-based session directories)
+└── main.py             # CLI entry point (server, run agent one-shot)
 ```
+
+## Domain ID Value Objects
+
+All entity IDs use typed UUID value objects instead of plain strings. Defined in `src/domain/ids.py`:
+
+- `AbstractId(uuid.UUID)` — base class with `.generate()`, `.short()` (8 hex chars), and Pydantic support
+- `UserId`, `SessionId`, `AgentId`, `EntryId` — concrete subtypes
+
+This gives type safety (can't accidentally pass an `AgentId` where a `SessionId` is expected), clean logging via `.short()`, and automatic FastAPI path parameter conversion.
 
 ## Available Tools
 
 | Tool | Description |
 |------|-------------|
 | `aidevs_headquarters` | Send reports to AIDevs headquarters API |
+| `analyze_image` | Vision model analysis of images (URL or local file) |
 | `ask_user` | Human-in-the-loop — pauses agent, waits for user input |
+| `count_tokens` | Estimate token count of text or file |
 | `csv_filter` | Filter and query CSV files |
 | `download_file` | Download files from URLs |
+| `grep_file` | Regex search within files |
 | `http_request` | Make HTTP requests (GET, POST, etc.) |
 | `list_files` | List files in the agent workspace |
 | `read_file` | Read file contents from the agent workspace |
+| `spawn_agent` | Spawn isolated subagents with workspace bridging |
+| `think` | Step-by-step reasoning scratchpad (returns input to agent) |
 | `write_file` | Write files to the agent workspace |
+| `zmail` | Send email via zmail backend API |
 
 ## Setup
 
@@ -92,7 +109,7 @@ async def main():
     await init_db()
 
     agent = StandaloneAgent("alice")
-    
+
     # Single-turn:
     result = await agent.send("What is 2 + 2?")
     logger.info("Agent response (status={}): {}", result.status, result.output)
@@ -215,6 +232,7 @@ Create `src/workspace/agents/myagent.agent.md`:
 ```yaml
 ---
 name: myagent
+description: "One-line summary shown to spawn_agent callers"
 model: ""
 tools:
   - http_request
@@ -228,6 +246,7 @@ This markdown body becomes the system prompt.
 ```
 
 - `model: ""` uses the default from `openrouter_default_chat_model` setting
+- `description` is optional; shown when other agents list available subagents via `spawn_agent`
 - `tools` lists which registered tools the agent can call
 - `max_turns` limits the LLM call loop iterations
 
@@ -260,23 +279,29 @@ Agents operate in isolated, session-scoped workspaces. File tools enforce direct
 
 This prevents agents from escaping their workspace or accessing other agents' data.
 
+Subagents spawned via `spawn_agent` get their own isolated workspace. Files are passed in via `input_files` (copied to child inbox) and bridged back via the child's `outbox/` → parent's `inbox/agnt_{id}/`.
+
 ## Configuration
 
 Key settings in `.env`:
 
-| Variable                          | Default                          | Description                             |
-|-----------------------------------|----------------------------------|-----------------------------------------|
-| `debug`                           | `false`                          | Enable debug logging                    |
-| `log_level`                       | `INFO`                           | Log level (DEBUG, INFO, WARNING, ERROR) |
-| `api_key`                         | `change-me`                      | Bearer token for API auth               |
-| `database_url`                    | `sqlite+aiosqlite:///./agent.db` | Database connection string              |
-| `openrouter_api_key`              | —                                | OpenRouter API key (required)           |
-| `openrouter_default_chat_model`   | `openai/gpt-4.1-mini`            | Default LLM chat model                  |
-| `openrouter_default_vision_model` | `google/gemini-3-flash-preview`  | Default vision model                    |
-| `provider_max_retries`            | `3`                              | Max retries for LLM provider calls      |
-| `aidevs4_headquarters_api_key`    | —                                | AIDevs headquarters API key             |
-| `aidevs4_headquarters_url`        | -                                | AIDevs headquarters URL                 |
-| `agent_default_name`              | `alice`                          | Default agent when none specified       |
-| `agent_workspace_dir`             | `workspace`                      | Runtime workspace directory             |
-| `agent_rate_limit_rpm`            | `30`                             | Max requests per minute per user        |
-| `agent_max_turns`                 | `10`                             | Default max LLM loop iterations         |
+| Variable                          | Default                          | Description                               |
+|-----------------------------------|----------------------------------|-------------------------------------------|
+| `debug`                           | `false`                          | Enable debug logging                      |
+| `log_level`                       | `INFO`                           | Log level (DEBUG, INFO, WARNING, ERROR)   |
+| `api_key`                         | `change-me`                      | Bearer token for API auth                 |
+| `database_url`                    | `sqlite+aiosqlite:///./agent.db` | Database connection string                |
+| `openrouter_api_key`              | —                                | OpenRouter API key (required)             |
+| `openrouter_default_chat_model`   | `openai/gpt-4.1-mini`           | Default LLM chat model                    |
+| `openrouter_default_vision_model` | `google/gemini-3-flash-preview`  | Default vision model                      |
+| `provider_max_retries`            | `3`                              | Max retries for LLM provider calls        |
+| `aidevs4_headquarters_api_key`    | —                                | AIDevs headquarters API key               |
+| `aidevs4_headquarters_system_url` | —                                | AIDevs headquarters URL                   |
+| `agent_default_name`              | `alice`                          | Default agent when none specified         |
+| `agent_workspace_dir`             | `workspace`                      | Runtime workspace directory               |
+| `agent_rate_limit_rpm`            | `30`                             | Max requests per minute per user          |
+| `agent_max_turns`                 | `10`                             | Default max LLM loop iterations           |
+| `agent_cleanup_child_workspace`   | `true`                           | Remove subagent workspace after execution |
+| `langfuse_public_key`             | —                                | Langfuse tracing public key               |
+| `langfuse_secret_key`             | —                                | Langfuse tracing secret key               |
+| `langfuse_base_url`               | `https://cloud.langfuse.com`     | Langfuse API base URL                     |
