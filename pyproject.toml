@@ -8,8 +8,8 @@ jobs = 0
 # Recurse into subdirectories
 recursive = true
 
-# Score is noise during errors-only phase
-score = false
+# Score the code and report a final score
+score = true
 
 # Ignore auto-generated / framework-managed directories
 ignore = ["alembic", "__pycache__"]
