@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Git pre-push hook: run pylint (errors-only) before pushing.
-# Fails the push if any E or F level issues are found.
+# Git pre-push hook: run pylint before pushing.
 #
 
 set -euo pipefail
@@ -20,9 +19,7 @@ fi
 
 echo "pre-push: running pylint (errors + fatal only)..."
 
-# --fail-on=E ensures non-zero exit only for actual errors
-# Config is read from pyproject.toml automatically
-if ! "$PYLINT" app/ services/ missions/ config.py main.py --fail-on=E,F; then
+if ! "$PYLINT" app/ services/ missions/ config.py main.py; then
     echo ""
     echo "pre-push: pylint found errors. Fix them before pushing."
     echo "         Run: .venv/bin/pylint app/ services/ missions/ config.py main.py"

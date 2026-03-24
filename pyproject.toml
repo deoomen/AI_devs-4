@@ -11,6 +11,9 @@ score = false
 # Ignore auto-generated / framework-managed directories
 ignore = ["alembic", "__pycache__"]
 
+# Pre-push hook uses this: non-zero exit only for errors/fatal
+fail-on = "E,F"
+
 [tool.pylint.format]
 max-line-length = 120
 
