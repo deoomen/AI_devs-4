@@ -1,7 +1,13 @@
+# IDE and Python related files
 .idea
-.claude
 .venv
 *.iml
+
+# AI
+.claude
+!.claude/settings.json
+
+# Project files
 .env
 .workspace/
 *.db
