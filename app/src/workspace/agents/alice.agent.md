@@ -1,7 +1,7 @@
 ---
 name: alice
 description: General-purpose assistant — orchestrates tasks, communicates with external APIs
-model: anthropic/claude-sonnet-4.6
+model: google/gemini-3-flash-preview
 tools:
   - aidevs_headquarters
   - ask_user
