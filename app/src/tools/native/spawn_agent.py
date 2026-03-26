@@ -3,6 +3,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.config import to_relative_workspace
 from src.domain.agent import Agent
 from src.domain.entry import Entry
 from src.domain.ids import AgentId, EntryId
@@ -123,19 +124,21 @@ async def _execute(arguments: dict) -> ToolResult:
     if config is None:
         return ToolResult(output=f"Agent '{agent_name}' not found", is_error=True)
 
-    # Save parent context
-    parent_workspace = ctx.agent_workspace or get_workspace_root()
+    # Save parent context (relative paths)
+    parent_rel = ctx.agent_workspace
+    parent_abs = get_workspace_root()  # resolved absolute for file I/O
     parent_agent_id = ctx.agent_id
 
     # Create isolated child workspace
     ws = SessionWorkspace(ctx.session_id)
     agent_id = AgentId.generate()
     short_id = agent_id.short()
-    child_workspace = ws.create_agent_dir(agent_id)
+    child_abs = ws.create_agent_dir(agent_id)
+    child_rel = to_relative_workspace(child_abs)
 
     # Copy input files from parent workspace into child's inbox
     if input_files:
-        copied = _copy_input_files(input_files, parent_workspace, child_workspace / "inbox")
+        copied = _copy_input_files(input_files, parent_abs, child_abs / "inbox")
         if copied:
             logger.info("Copied {} input file(s) to child inbox: {}", len(copied), copied)
 
@@ -144,7 +147,7 @@ async def _execute(arguments: dict) -> ToolResult:
         session_id=ctx.session_id,
         status=AgentStatus.PENDING,
         config=config,
-        workspace_path=str(child_workspace),
+        workspace_path=child_rel,
         parent_agent_id=ctx.agent_id,
     )
     await ctx.repos.agents.create(agent)
@@ -166,26 +169,27 @@ async def _execute(arguments: dict) -> ToolResult:
     logger.info("Spawning subagent '{}' (id={}) with isolated workspace", agent_name, agent_id)
 
     # Set child workspace on context and run subagent
-    ctx.agent_workspace = child_workspace
+    ctx.agent_workspace = child_rel
     from src.runtime.runner import run_agent
     agent = await run_agent(ctx, agent)
 
     # Restore parent context
-    ctx.agent_workspace = parent_workspace
+    ctx.agent_workspace = parent_rel
     ctx.agent_id = parent_agent_id
-    set_workspace_root(parent_workspace)
+    if parent_rel:
+        set_workspace_root(parent_rel)
 
     # Bridge: copy child outbox → parent inbox
     bridged_files = _copy_outbox_to_parent_inbox(
-        child_workspace / "outbox", parent_workspace, short_id,
+        child_abs / "outbox", parent_abs, short_id,
     )
     if bridged_files:
         logger.info("Bridged {} file(s) from child outbox to parent inbox", len(bridged_files))
 
     # Clean up child workspace after bridging is complete
     if settings.agent_cleanup_child_workspace:
-        shutil.rmtree(child_workspace, ignore_errors=True)
-        logger.info("Cleaned up child workspace: {}", child_workspace)
+        shutil.rmtree(child_abs, ignore_errors=True)
+        logger.info("Cleaned up child workspace: {}", child_abs)
 
     entries = await ctx.repos.entries.list_by_agent(agent.id)
     output = _extract_last_assistant_text(entries)

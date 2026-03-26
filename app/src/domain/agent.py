@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .ids import AgentId, SessionId
 from .types import AgentStatus, WaitType
@@ -29,7 +30,7 @@ class Agent:
     config: AgentConfig
     turn_count: int = 0
     waiting_for: list[WaitEntry] = field(default_factory=list)
-    workspace_path: str | None = None
+    workspace_path: Path | None = None
     parent_agent_id: AgentId | None = None
 
 

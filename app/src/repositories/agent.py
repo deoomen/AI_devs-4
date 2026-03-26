@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +28,7 @@ def _agent_from_row(row: AgentRow) -> Agent:
         config=config,
         turn_count=row.turn_count,
         waiting_for=waiting,
-        workspace_path=row.workspace_path,
+        workspace_path=Path(row.workspace_path) if row.workspace_path else None,
         parent_agent_id=row.parent_agent_id,
     )
 
@@ -49,7 +50,7 @@ def _agent_to_row_data(agent: Agent) -> dict:
         "config_json": json.dumps(config_data),
         "waiting_for_json": json.dumps(waiting_data),
         "turn_count": agent.turn_count,
-        "workspace_path": agent.workspace_path,
+        "workspace_path": str(agent.workspace_path) if agent.workspace_path else None,
         "parent_agent_id": agent.parent_agent_id,
     }
 

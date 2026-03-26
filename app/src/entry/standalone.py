@@ -4,8 +4,8 @@ Not meant to be run directly — use `python main.py run` or import StandaloneAg
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 
+from src.config import to_relative_workspace
 from src.db.engine import async_session_factory
 from src.db.seed import STANDALONE_USER_ID
 from src.domain.agent import Agent, WaitEntry
@@ -98,7 +98,7 @@ class StandaloneAgent:
                 raise ValueError(f"Agent is not waiting (status={agent.status})")
 
             if agent.workspace_path:
-                ctx.agent_workspace = Path(agent.workspace_path)
+                ctx.agent_workspace = agent.workspace_path
 
             agent = await deliver_result(ctx, agent, call_id, output)
             entries = await repos.entries.list_by_agent(agent.id)
@@ -128,17 +128,18 @@ class StandaloneAgent:
         ws.setup()
 
         agent_id = AgentId.generate()
-        agent_ws = ws.create_agent_dir(agent_id)
+        ws.create_agent_dir(agent_id)
+        agent_ws_rel = to_relative_workspace(ws.agent_dir(agent_id))
         agent = Agent(
             id=agent_id,
             session_id=self._session_id,
             status=AgentStatus.PENDING,
             config=agent_config,
-            workspace_path=str(agent_ws),
+            workspace_path=agent_ws_rel,
         )
         await ctx.repos.agents.create(agent)
         self._agent_id = agent.id
-        ctx.agent_workspace = agent_ws
+        ctx.agent_workspace = agent_ws_rel
 
         await self._add_user_message(ctx, agent, message)
         return await self._run_and_collect(ctx, agent, user_input=message)
@@ -149,7 +150,7 @@ class StandaloneAgent:
             raise ValueError(f"Agent '{self._agent_id}' not found in DB")
 
         if agent.workspace_path:
-            ctx.agent_workspace = Path(agent.workspace_path)
+            ctx.agent_workspace = agent.workspace_path
 
         agent.status = AgentStatus.PENDING
         agent.turn_count = 0

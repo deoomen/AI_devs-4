@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from src.config import get_workspace_path
+from src.config import get_workspace_path, to_absolute_workspace
 
 _workspace_root: contextvars.ContextVar[Path | None] = contextvars.ContextVar(
     "workspace_root", default=None,
@@ -31,9 +31,12 @@ WORKSPACE_ACL: dict[str, DirAcl] = {
 }
 
 
-def set_workspace_root(path: Path) -> None:
-    """Set the workspace root for the current async context (per-agent)."""
-    _workspace_root.set(path)
+def set_workspace_root(relative: Path) -> None:
+    """Set the workspace root for the current async context (per-agent).
+
+    Accepts a workspace-relative path, resolves to absolute internally.
+    """
+    _workspace_root.set(to_absolute_workspace(relative))
 
 
 def get_workspace_root() -> Path:
