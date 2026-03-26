@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     agent_default_name: str = "alice"
     agent_default_max_turns: int = 10
     agent_default_rate_limit_rpm: int = 30
+    agent_fallback_final_text: str = "No response text returned."
+    agent_max_turn_final_text: str = "Reached max turn limit before completion."
 
     # Workspace
     agent_workspace_dir: str = "workspace"

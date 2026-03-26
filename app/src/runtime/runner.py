@@ -18,6 +18,7 @@ from src.events.types import Event, EventName
 from src.providers.types import ProviderMessage
 from src.utils.tokens import estimate_tokens
 from src.tools.workspace import set_workspace_root
+from src.config import settings
 from .context import RuntimeContext, set_runtime_context
 
 
@@ -271,7 +272,10 @@ async def run_agent(
         # If no tool calls, we're done
         if not response.tool_calls:
             break
+    else:
+        logger.warning("Agent hit max turn limit ({})", max_turns)
 
+    reached_max_turns = agent.turn_count >= max_turns
     agent = complete_agent(agent)
     await ctx.repos.agents.update(agent)
 
@@ -281,10 +285,14 @@ async def run_agent(
         (e.content for e in reversed(entries) if e.type == EntryType.MESSAGE and e.role == Role.ASSISTANT and e.content),
         None,
     )
+    if reached_max_turns:
+        final_text = settings.agent_max_turn_final_text
+    else:
+        final_text = last_text or settings.agent_fallback_final_text
     ctx.events.emit(Event(
         name=EventName.AGENT_COMPLETED,
         agent_id=agent.id,
-        data={"output": last_text},
+        data={"output": final_text},
     ))
     return agent
 
