@@ -34,8 +34,8 @@ class Settings(BaseSettings):
 
     # Agent defaults
     agent_default_name: str = "alice"
-    agent_max_turns: int = 10
-    agent_rate_limit_rpm: int = 30
+    agent_default_max_turns: int = 10
+    agent_default_rate_limit_rpm: int = 30
 
     # Workspace
     agent_workspace_dir: str = "workspace"

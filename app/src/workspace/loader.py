@@ -1,7 +1,7 @@
 import yaml
 from loguru import logger
 
-from src.config import ROOT_DIR
+from src.config import ROOT_DIR, settings
 from src.domain.agent import AgentConfig
 
 AGENTS_DEFINITIONS_DIR = ROOT_DIR / "src" / "workspace" / "agents"
@@ -40,5 +40,5 @@ def load_agent_config(name: str) -> AgentConfig | None:
         system_prompt=body,
         description=frontmatter.get("description", ""),
         tools=frontmatter.get("tools", []),
-        max_turns=frontmatter.get("max_turns", 10),
+        max_turns=frontmatter.get("max_turns", settings.agent_default_max_turns),
     )

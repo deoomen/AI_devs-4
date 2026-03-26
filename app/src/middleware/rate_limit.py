@@ -23,7 +23,7 @@ class RateLimitInfo:
 
 class RateLimiter:
     def __init__(self, rpm: int | None = None):
-        self._rpm = rpm or settings.agent_rate_limit_rpm
+        self._rpm = rpm or settings.agent_default_rate_limit_rpm
         self._windows: dict[str, _Window] = defaultdict(_Window)
 
     def check(self, user_id: UserId) -> RateLimitInfo:
