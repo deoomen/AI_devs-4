@@ -12,7 +12,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     safe = safe_resolve(path, FileOp.READ)
     if safe is None:
-        return ToolResult(output=f"Read denied: {path} (use inbox/, notes/, or outbox/)", is_error=True)
+        return ToolResult(output=f"Read denied: {path} (use inbox/, notes/, outbox/, or shared/)", is_error=True)
     if not safe.exists():
         return ToolResult(output=f"File not found: {path}", is_error=True)
     if not safe.is_file():

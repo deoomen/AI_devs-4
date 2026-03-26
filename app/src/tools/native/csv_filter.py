@@ -74,7 +74,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     safe_input = safe_resolve(input_path, FileOp.READ)
     if safe_input is None:
-        return ToolResult(output=f"Read denied: {input_path} (use inbox/, notes/, or outbox/)", is_error=True)
+        return ToolResult(output=f"Read denied: {input_path} (use inbox/, notes/, outbox/, or shared/)", is_error=True)
     if not safe_input.exists():
         return ToolResult(output=f"File not found: {input_path}", is_error=True)
 

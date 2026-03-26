@@ -21,10 +21,13 @@ class DirAcl:
     parent: frozenset[FileOp]
 
 
+SHARED_DIR = "shared"
+
 WORKSPACE_ACL: dict[str, DirAcl] = {
-    "inbox":  DirAcl(owner=frozenset({FileOp.READ}),              parent=frozenset({FileOp.WRITE})),
-    "notes":  DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset()),
-    "outbox": DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset({FileOp.READ})),
+    "inbox":     DirAcl(owner=frozenset({FileOp.READ}),              parent=frozenset({FileOp.WRITE})),
+    "notes":     DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset()),
+    "outbox":    DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset({FileOp.READ})),
+    SHARED_DIR:  DirAcl(owner=frozenset({FileOp.READ}),              parent=frozenset()),
 }
 
 
@@ -38,28 +41,47 @@ def get_workspace_root() -> Path:
     return _workspace_root.get() or get_workspace_path()
 
 
+def get_shared_path() -> Path:
+    """Return the global shared directory (workspace/shared/). Created on first call."""
+    shared = get_workspace_path() / SHARED_DIR
+    shared.mkdir(parents=True, exist_ok=True)
+    return shared
+
+
 def safe_resolve(relative: str, op: FileOp = FileOp.READ) -> Path | None:
     """Resolve a relative path safely within the current workspace root.
 
     When agent-scoped (contextvar set), enforces directory restrictions
     based on WORKSPACE_ACL owner permissions:
         write  -> notes/, outbox/ only
-        read   -> inbox/, notes/, outbox/ only (+ agent root for listing)
+        read   -> inbox/, notes/, outbox/, shared/ only (+ agent root for listing)
+
+    The ``shared/`` directory is special: it resolves against the global
+    workspace root (persistent across sessions) instead of the agent root.
+    Its permissions are governed by WORKSPACE_ACL like every other directory.
 
     Returns the resolved Path, or None if access is denied.
     """
     root = get_workspace_root().resolve()
-    resolved = (root / relative).resolve()
+    parts = Path(relative).parts
+    top_dir = parts[0] if parts else None
 
-    # Block escape from workspace boundary
-    if not str(resolved).startswith(str(root)):
+    # shared/ resolves against global workspace root, not agent-scoped root
+    if top_dir == SHARED_DIR:
+        shared_root = get_shared_path().resolve()
+        resolved = (shared_root / Path(*parts[1:])).resolve() if len(parts) > 1 else shared_root
+        boundary = shared_root
+    else:
+        resolved = (root / relative).resolve()
+        boundary = root
+
+    # Block escape from boundary
+    if not str(resolved).startswith(str(boundary)):
         return None
 
-    # When agent-scoped, enforce subdirectory access control
+    # When agent-scoped, enforce subdirectory access control via ACL
     if _workspace_root.get() is not None and resolved != root:
-        try:
-            top_dir = resolved.relative_to(root).parts[0]
-        except (ValueError, IndexError):
+        if top_dir is None:
             return None
         allowed = {d for d, acl in WORKSPACE_ACL.items() if op in acl.owner}
         if top_dir not in allowed:

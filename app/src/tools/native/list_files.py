@@ -2,14 +2,14 @@ from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import FileOp, safe_resolve
+from ..workspace import FileOp, get_shared_path, safe_resolve, _workspace_root
 
 
 async def _execute(arguments: dict) -> ToolResult:
     path = arguments.get("path", ".")
     safe = safe_resolve(path, FileOp.READ)
     if safe is None:
-        return ToolResult(output=f"Read denied: {path} (use inbox/, notes/, or outbox/)", is_error=True)
+        return ToolResult(output=f"Read denied: {path} (use inbox/, notes/, outbox/, or shared/)", is_error=True)
     if not safe.exists():
         return ToolResult(output=f"Directory not found: {path}", is_error=True)
     if not safe.is_dir():
@@ -20,6 +20,13 @@ async def _execute(arguments: dict) -> ToolResult:
     for entry in entries:
         prefix = "d" if entry.is_dir() else "f"
         lines.append(f"{prefix} {entry.name}")
+
+    # When listing agent root, inject shared/ as a virtual entry
+    if path == "." and _workspace_root.get() is not None:
+        shared = get_shared_path()
+        if shared.exists() and any(shared.iterdir()):
+            lines.append("d shared")
+            lines.sort(key=lambda l: l.split(" ", 1)[1])
 
     logger.debug("list_files {} ({} entries)", path, len(lines))
     return ToolResult(output="\n".join(lines) if lines else "(empty)")
