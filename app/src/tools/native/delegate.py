@@ -3,7 +3,6 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.tools.workspace import to_relative_workspace
 from src.domain.agent import Agent
 from src.domain.entry import Entry
 from src.domain.ids import AgentId, EntryId
@@ -131,8 +130,8 @@ async def _execute(arguments: dict) -> ToolResult:
     ws = SessionWorkspace(ctx.session_id)
     agent_id = AgentId.generate()
     short_id = agent_id.short()
-    child_abs = ws.create_agent_dir(agent_id)
-    child_rel = to_relative_workspace(child_abs)
+    child_rel = ws.create_agent_dir(agent_id)
+    child_abs = ws.resolve(child_rel)
 
     # Copy input files from parent workspace into child's inbox
     if input_files:

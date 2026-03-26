@@ -5,7 +5,6 @@ Not meant to be run directly — use `python main.py run` or import StandaloneAg
 
 from dataclasses import dataclass
 
-from src.tools.workspace import to_relative_workspace
 from src.db.engine import async_session_factory
 from src.db.seed import STANDALONE_USER_ID
 from src.domain.agent import Agent, WaitEntry
@@ -128,17 +127,16 @@ class StandaloneAgent:
 
         agent_id = AgentId.generate()
         ws.create_agent_dir(agent_id)
-        agent_ws_rel = to_relative_workspace(ws.agent_dir(agent_id))
         agent = Agent(
             id=agent_id,
             session_id=self._session_id,
             status=AgentStatus.PENDING,
             config=agent_config,
-            workspace_path=agent_ws_rel,
+            workspace_path=ws.agent_dir(agent_id),
         )
         await ctx.repos.agents.create(agent)
         self._agent_id = agent.id
-        ctx.agent_workspace = agent_ws_rel
+        ctx.agent_workspace = ws.agent_dir(agent_id)
 
         await self._add_user_message(ctx, agent, message)
         return await self._run_and_collect(ctx, agent, user_input=message)

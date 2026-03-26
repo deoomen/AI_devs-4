@@ -11,7 +11,6 @@ from src.domain.types import AgentStatus, EntryType, Role
 from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
-from src.tools.workspace import to_relative_workspace
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
 
@@ -41,16 +40,15 @@ async def completions(
     # Create agent
     agent_id = AgentId.generate()
     ws.create_agent_dir(agent_id)
-    agent_ws_rel = to_relative_workspace(ws.agent_dir(agent_id))
     agent = Agent(
         id=agent_id,
         session_id=session.id,
         status=AgentStatus.PENDING,
         config=agent_config,
-        workspace_path=agent_ws_rel,
+        workspace_path=ws.agent_dir(agent_id),
     )
     await ctx.repos.agents.create(agent)
-    ctx.agent_workspace = agent_ws_rel
+    ctx.agent_workspace = ws.agent_dir(agent_id)
 
     # Store user message
     user_entry = Entry(
