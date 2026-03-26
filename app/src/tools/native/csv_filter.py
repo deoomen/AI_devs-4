@@ -69,8 +69,6 @@ async def _execute(arguments: dict) -> ToolResult:
 
     if not input_path:
         return ToolResult(output="Missing input_path", is_error=True)
-    if not filters:
-        return ToolResult(output="Missing filters", is_error=True)
 
     safe_input = safe_resolve(input_path, FileOp.READ)
     if safe_input is None:
@@ -85,6 +83,34 @@ async def _execute(arguments: dict) -> ToolResult:
         rows = list(reader)
 
     total = len(rows)
+
+    # No filters → inspect mode: return schema + sample rows
+    if not filters:
+        sample = rows[:preview_rows]
+        sample_lines = [",".join(all_columns)]
+        for row in sample:
+            sample_lines.append(",".join(row.get(c, "") for c in all_columns))
+        return ToolResult(output=(
+            f"Schema for {input_path} ({total} rows)\n"
+            f"Columns: {', '.join(all_columns)}\n"
+            f"Sample ({min(total, preview_rows)} rows):\n"
+            + "\n".join(sample_lines)
+        ))
+
+    # Validate filter column names against actual CSV headers
+    bad_columns = []
+    for flt in filters:
+        col = flt.get("column", "")
+        if col and col not in all_columns:
+            bad_columns.append(col)
+    if bad_columns:
+        return ToolResult(
+            output=(
+                f"Unknown column(s): {', '.join(bad_columns)}. "
+                f"Available columns: {', '.join(all_columns)}"
+            ),
+            is_error=True,
+        )
 
     # Apply filters (AND logic — all filters must match)
     filtered = []
@@ -151,9 +177,9 @@ csv_filter_tool = Tool(
     definition=ToolDefinition(
         name="csv_filter",
         description=(
-            "Filter rows in a CSV file by column conditions (AND logic). "
-            "Reads from workspace, writes filtered result to workspace. "
-            "Returns row count and a preview of matching rows."
+            "Inspect or filter a CSV file. "
+            "Call with just input_path (no filters) to get column names and sample rows. "
+            "Call with filters to filter rows by column conditions (AND logic) and save the result."
         ),
         parameters={
             "type": "object",
@@ -214,7 +240,7 @@ csv_filter_tool = Tool(
                     "description": "Number of preview rows to return (default: 5)",
                 },
             },
-            "required": ["input_path", "filters"],
+            "required": ["input_path"],
         },
     ),
     execute=_execute,
