@@ -3,7 +3,25 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from src.config import get_workspace_path, to_absolute_workspace
+from src.config import settings
+
+
+def get_workspace_path() -> Path:
+    """Resolve the agent workspace data directory (created on first call)."""
+    path = (settings.root_dir / settings.agent_workspace_dir).resolve()
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def to_relative_workspace(absolute: Path) -> Path:
+    """Convert an absolute workspace path to one relative to the workspace root."""
+    return absolute.resolve().relative_to(get_workspace_path())
+
+
+def to_absolute_workspace(relative: Path) -> Path:
+    """Resolve a workspace-relative path to an absolute filesystem path."""
+    return get_workspace_path() / relative
+
 
 _workspace_root: contextvars.ContextVar[Path | None] = contextvars.ContextVar(
     "workspace_root", default=None,

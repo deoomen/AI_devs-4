@@ -11,7 +11,7 @@ from src.domain.types import AgentStatus, EntryType, Role
 from src.errors import AppError, ErrorCode, error_envelope
 from src.runtime.context import RuntimeContext
 from src.runtime.runner import deliver_result, run_agent
-from src.config import to_relative_workspace
+from src.tools.workspace import to_relative_workspace
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
 

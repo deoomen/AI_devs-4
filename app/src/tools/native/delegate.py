@@ -3,7 +3,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.config import to_relative_workspace
+from src.tools.workspace import to_relative_workspace
 from src.domain.agent import Agent
 from src.domain.entry import Entry
 from src.domain.ids import AgentId, EntryId

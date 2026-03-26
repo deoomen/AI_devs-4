@@ -66,20 +66,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-def get_workspace_path() -> Path:
-    """Resolve the agent workspace data directory (created on first call)."""
-    path = (settings.root_dir / settings.agent_workspace_dir).resolve()
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def to_relative_workspace(absolute: Path) -> Path:
-    """Convert an absolute workspace path to one relative to the workspace root."""
-    return absolute.resolve().relative_to(get_workspace_path())
-
-
-def to_absolute_workspace(relative: Path) -> Path:
-    """Resolve a workspace-relative path to an absolute filesystem path."""
-    return get_workspace_path() / relative

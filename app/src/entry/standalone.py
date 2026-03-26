@@ -5,7 +5,7 @@ Not meant to be run directly — use `python main.py run` or import StandaloneAg
 
 from dataclasses import dataclass
 
-from src.config import to_relative_workspace
+from src.tools.workspace import to_relative_workspace
 from src.db.engine import async_session_factory
 from src.db.seed import STANDALONE_USER_ID
 from src.domain.agent import Agent, WaitEntry

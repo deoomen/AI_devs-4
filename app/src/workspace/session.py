@@ -22,7 +22,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.config import get_workspace_path
+from src.tools.workspace import get_workspace_path
 from src.domain.ids import AgentId, SessionId
 
 
