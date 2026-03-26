@@ -15,7 +15,7 @@ from src.providers.openrouter import OpenRouterProvider
 from src.repositories import create_repositories
 from src.runtime.context import RuntimeContext
 from src.tools.registry import ToolRegistry
-from src.tracing.subscriber import subscribe_langfuse
+from src.tracing.subscriber import subscribe_tracing
 
 _bearer_scheme = HTTPBearer()
 _provider = OpenRouterProvider()
@@ -25,7 +25,7 @@ _tool_registry = ToolRegistry.build_default()
 def _build_event_emitter() -> EventEmitter:
     emitter = EventEmitter()
     emitter.on(EventName.ALL, log_event)
-    subscribe_langfuse(emitter)
+    subscribe_tracing(emitter)
     return emitter
 
 

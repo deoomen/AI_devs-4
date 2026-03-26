@@ -23,8 +23,7 @@ from src.runtime.runner import deliver_result, run_agent
 from src.tools.registry import ToolRegistry
 from src.workspace.loader import load_agent_config
 from src.workspace.session import SessionWorkspace
-from src.tracing.langfuse import flush_langfuse
-from src.tracing.subscriber import subscribe_langfuse
+from src.tracing.subscriber import shutdown_tracing, subscribe_tracing
 
 
 def _extract_last_assistant_text(entries: list[Entry]) -> str | None:
@@ -54,7 +53,7 @@ class StandaloneAgent:
         self._provider = OpenRouterProvider()
         self._events = EventEmitter()
         self._events.on(EventName.ALL, log_event)
-        subscribe_langfuse(self._events)
+        subscribe_tracing(self._events)
 
     @property
     def session_id(self) -> SessionId:
@@ -79,7 +78,7 @@ class StandaloneAgent:
                 result = await self._continue(ctx, message)
 
             await db.commit()
-        flush_langfuse()
+        shutdown_tracing()
         return result
 
     async def deliver(self, call_id: str, output: str) -> AgentResult:
