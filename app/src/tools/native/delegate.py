@@ -207,11 +207,11 @@ async def _execute(arguments: dict) -> ToolResult:
         )
 
 
-spawn_agent_tool = Tool(
-    name="spawn_agent",
+delegate_tool = Tool(
+    name="delegate",
     type=ToolType.SYNC,
     definition=ToolDefinition(
-        name="spawn_agent",
+        name="delegate",
         description=_build_description(),
         parameters={
             "type": "object",

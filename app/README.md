@@ -56,7 +56,7 @@ This gives type safety (can't accidentally pass an `AgentId` where a `SessionId`
 | `http_request` | Make HTTP requests (GET, POST, etc.) |
 | `list_files` | List files in the agent workspace |
 | `read_file` | Read file contents from the agent workspace |
-| `spawn_agent` | Spawn isolated subagents with workspace bridging |
+| `delegate` | Delegate tasks to isolated subagents with workspace bridging |
 | `think` | Step-by-step reasoning scratchpad (returns input to agent) |
 | `write_file` | Write files to the agent workspace |
 | `zmail` | Send email via zmail backend API |
@@ -232,7 +232,7 @@ Create `src/workspace/agents/myagent.agent.md`:
 ```yaml
 ---
 name: myagent
-description: "One-line summary shown to spawn_agent callers"
+description: "One-line summary shown to delegate callers"
 model: ""
 tools:
   - http_request
@@ -246,7 +246,7 @@ This markdown body becomes the system prompt.
 ```
 
 - `model: ""` uses the default from `openrouter_default_chat_model` setting
-- `description` is optional; shown when other agents list available subagents via `spawn_agent`
+- `description` is optional; shown when other agents list available subagents via `delegate`
 - `tools` lists which registered tools the agent can call
 - `max_turns` limits the LLM call loop iterations
 
@@ -279,7 +279,7 @@ Agents operate in isolated, session-scoped workspaces. File tools enforce direct
 
 This prevents agents from escaping their workspace or accessing other agents' data.
 
-Subagents spawned via `spawn_agent` get their own isolated workspace. Files are passed in via `input_files` (copied to child inbox) and bridged back via the child's `outbox/` → parent's `inbox/agnt_{id}/`.
+Subagents spawned via `delegate` get their own isolated workspace. Files are passed in via `input_files` (copied to child inbox) and bridged back via the child's `outbox/` → parent's `inbox/agnt_{id}/`.
 
 ## Configuration
 
