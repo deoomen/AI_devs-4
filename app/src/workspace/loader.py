@@ -1,10 +1,10 @@
 import yaml
 from loguru import logger
 
-from src.config import ROOT_DIR, settings
+from src.config import settings
 from src.domain.agent import AgentConfig
 
-AGENTS_DEFINITIONS_DIR = ROOT_DIR / "src" / "workspace" / "agents"
+AGENTS_DEFINITIONS_DIR = settings.root_dir / "src" / "workspace" / "agents"
 
 
 def list_agent_names() -> list[str]:

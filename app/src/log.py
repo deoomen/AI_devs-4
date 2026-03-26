@@ -10,9 +10,9 @@ import sys
 
 from loguru import logger
 
-from src.config import ROOT_DIR
+from src.config import settings
 
-_LOG_DIR = ROOT_DIR / "logs"
+_LOG_DIR = settings.root_dir / "logs"
 
 # ---------------------------------------------------------------------------
 # Sensitive-key redaction

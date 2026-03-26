@@ -2,16 +2,16 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
-"""Absolute path to the `app/` directory."""
+_ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
     model_config = {
-        "env_file": (ROOT_DIR / ".env", ROOT_DIR.parent / ".env"),
+        "env_file": (_ROOT_DIR / ".env", _ROOT_DIR.parent / ".env"),
         "extra": "ignore",
     }
 
+    root_dir: Path = _ROOT_DIR  # Absolute path to the `app/` directory.
     app_name: str = "ai-agent"
     debug: bool = False
     log_level: str = "INFO"
@@ -70,7 +70,7 @@ settings = Settings()
 
 def get_workspace_path() -> Path:
     """Resolve the agent workspace data directory (created on first call)."""
-    path = (ROOT_DIR / settings.agent_workspace_dir).resolve()
+    path = (settings.root_dir / settings.agent_workspace_dir).resolve()
     path.mkdir(parents=True, exist_ok=True)
     return path
 
