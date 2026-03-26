@@ -14,8 +14,6 @@ from src.workspace.loader import list_agent_names, load_agent_config
 from src.workspace.session import SessionWorkspace
 from ..types import Tool, ToolDefinition, ToolResult
 
-_INLINE_MAX_BYTES = 2048
-
 
 def _build_description() -> str:
     from src.config import settings
