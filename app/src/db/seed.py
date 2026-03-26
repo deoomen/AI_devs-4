@@ -16,7 +16,7 @@ async def seed_default_user() -> None:
         result = await session.execute(
             select(UserRow).where(UserRow.api_key_hash == api_key_hash)
         )
-        if result.scalar_one_or_none() is None:
+        if result.scalars() is None:
             session.add(
                 UserRow(
                     id=SERVER_USER_ID,
