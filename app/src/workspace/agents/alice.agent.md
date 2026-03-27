@@ -1,7 +1,7 @@
 ---
 name: alice
 description: General-purpose assistant — orchestrates tasks, communicates with external APIs
-model: google/gemini-3-flash-preview
+model: qwen/qwen3.5-plus-02-15
 tools:
   - aidevs_headquarters
   - ask_user
@@ -10,7 +10,7 @@ tools:
   - read_file
   - think
   - write_file
-max_turns: 50
+max_turns: 80
 ---
 ## Identity
 
