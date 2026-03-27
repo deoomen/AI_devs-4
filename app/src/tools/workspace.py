@@ -45,7 +45,7 @@ WORKSPACE_ACL: dict[str, DirAcl] = {
     "inbox":     DirAcl(owner=frozenset({FileOp.READ}),              parent=frozenset({FileOp.WRITE})),
     "notes":     DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset()),
     "outbox":    DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset({FileOp.READ})),
-    SHARED_DIR:  DirAcl(owner=frozenset({FileOp.READ}),              parent=frozenset()),
+    SHARED_DIR:  DirAcl(owner=frozenset({FileOp.READ, FileOp.WRITE}), parent=frozenset()),
 }
 
 
