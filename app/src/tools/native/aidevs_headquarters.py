@@ -74,7 +74,7 @@ aidevs_headquarters_tool = Tool(
     type=ToolType.SYNC,
     definition=ToolDefinition(
         name="aidevs_headquarters",
-        description="Communicate with the AIDevs headquarters at ***REMOVED***. Use this to send mission answers via /verify or interact with any headquarters endpoint. The API key is injected automatically.",
+        description="Communicate with the AIDevs headquarters. Use this to send mission answers via /verify or interact with any headquarters endpoint. The API key is injected automatically.",
         parameters={
             "type": "object",
             "properties": {

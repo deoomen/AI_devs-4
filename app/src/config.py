@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     aidevs4_headquarters_api_key: str = ""
     aidevs4_headquarters_system_url: str = ""
 
+    # OKO web panel (mission16)
+    oko_panel_url: str = ""
+    oko_panel_username: str = ""
+    oko_panel_password: str = ""
+
     # Agent defaults
     agent_default_name: str = "alice"
     agent_default_max_turns: int = 10
@@ -53,6 +58,9 @@ class Settings(BaseSettings):
     template_whitelist: dict[str, str] = {
         "AIDEVS4_HEADQUARTERS_API_KEY": "aidevs4_headquarters_api_key",
         "AIDEVS4_HEADQUARTERS_SYSTEM_URL": "aidevs4_headquarters_system_url",
+        "OKO_PANEL_URL": "oko_panel_url",
+        "OKO_PANEL_USERNAME": "oko_panel_username",
+        "OKO_PANEL_PASSWORD": "oko_panel_password",
     }
 
     def get_template_vars(self) -> dict[str, str]:
