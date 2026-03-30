@@ -15,7 +15,8 @@ think_tool = Tool(
         description=(
             "Use this tool to think step-by-step, plan your next actions, "
             "compare data, or reason about a problem before acting. "
-            "Your input is returned back to you — no external calls are made."
+            "Your input is returned back to you — no external calls are made. "
+            "After reaching important conclusions or a multi-step plan, write them to notes/ with write_file so they persist across turns."
         ),
         parameters={
             "type": "object",

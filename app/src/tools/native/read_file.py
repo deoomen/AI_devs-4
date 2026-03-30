@@ -45,14 +45,15 @@ read_file_tool = Tool(
         description=(
             "Read the contents of a file in the agent workspace. "
             "Supports optional offset/limit for chunked reading of large files. "
-            "Returns a header line with line range info followed by the content."
+            "Returns a header line with line range info followed by the content. "
+            "Readable directories: inbox/ (files from parent/sub-agents), notes/ (your scratchpad), outbox/ (your results), shared/ (persistent cross-run cache)."
         ),
         parameters={
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "File path relative to workspace",
+                    "description": "File path relative to workspace (e.g. inbox/agnt_abc/result.md, notes/plan.md, shared/cached_data.json)",
                 },
                 "offset": {
                     "type": "integer",

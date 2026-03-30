@@ -37,13 +37,16 @@ list_files_tool = Tool(
     type=ToolType.SYNC,
     definition=ToolDefinition(
         name="list_files",
-        description="List files and directories in the agent workspace. Returns entries prefixed with 'd' (directory) or 'f' (file).",
+        description=(
+            "List files and directories in the agent workspace. Returns entries prefixed with 'd' (directory) or 'f' (file). "
+            "Available directories: inbox/ (incoming files), notes/ (ephemeral scratchpad), outbox/ (results for parent), shared/ (persistent global cache — check here first before fetching remote data)."
+        ),
         parameters={
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Directory path relative to workspace (default: workspace root)",
+                    "description": "Directory path relative to workspace (default: workspace root '.')",
                     "default": ".",
                 },
             },

@@ -27,13 +27,20 @@ write_file_tool = Tool(
     type=ToolType.SYNC,
     definition=ToolDefinition(
         name="write_file",
-        description="Write content to a file in the agent workspace. Creates parent directories if needed. Overwrites existing files.",
+        description=(
+            "Write content to a file in the agent workspace. Creates parent directories if needed. Overwrites existing files. "
+            "Directory guide: "
+            "notes/ — ephemeral scratchpad for this run: plans, API responses, raw data, reasoning checkpoints; "
+            "outbox/ — final results for the parent agent to read; "
+            "shared/ — persistent global cache across ALL runs and agents: use for expensive fetched data, API docs, or anything worth reusing next time. "
+            "Prefer writing to files over keeping large data in conversation context."
+        ),
         parameters={
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "File path relative to workspace",
+                    "description": "File path relative to workspace (e.g. notes/plan.md, outbox/result.md, shared/api_docs.md)",
                 },
                 "content": {
                     "type": "string",
