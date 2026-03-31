@@ -4,6 +4,7 @@ Not meant to be run directly — use `python main.py run` or import StandaloneAg
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from src.db.engine import async_session_factory
 from src.db.seed import STANDALONE_USER_ID
@@ -38,6 +39,7 @@ class AgentResult:
     status: AgentStatus
     output: str | None
     waiting_for: list[WaitEntry] | None = None
+    workspace_path: Path | None = None
 
 
 class StandaloneAgent:
@@ -100,6 +102,7 @@ class StandaloneAgent:
 
             agent = await deliver_result(ctx, agent, call_id, output)
             entries = await repos.entries.list_by_agent(agent.id)
+            workspace_abs = SessionWorkspace(agent.session_id).resolve(agent.workspace_path) if agent.workspace_path else None
             await db.commit()
 
         return AgentResult(
@@ -107,6 +110,7 @@ class StandaloneAgent:
             status=agent.status,
             output=_extract_last_assistant_text(entries),
             waiting_for=agent.waiting_for if agent.waiting_for else None,
+            workspace_path=workspace_abs,
         )
 
     async def _ensure_session(self, ctx: RuntimeContext) -> None:
@@ -173,9 +177,11 @@ class StandaloneAgent:
     async def _run_and_collect(self, ctx: RuntimeContext, agent: Agent, user_input: str = "") -> AgentResult:
         agent = await run_agent(ctx, agent, user_input=user_input)
         entries = await ctx.repos.entries.list_by_agent(agent.id)
+        workspace_abs = SessionWorkspace(agent.session_id).resolve(agent.workspace_path) if agent.workspace_path else None
         return AgentResult(
             agent_id=agent.id,
             status=agent.status,
             output=_extract_last_assistant_text(entries),
             waiting_for=agent.waiting_for if agent.waiting_for else None,
+            workspace_path=workspace_abs,
         )
