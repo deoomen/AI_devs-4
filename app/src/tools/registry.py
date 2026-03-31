@@ -25,6 +25,7 @@ class ToolRegistry:
         from .native.think import think_tool
         from .native.web_browse import web_browse_tool
         from .native.write_file import write_file_tool
+        from .native.wait import wait_tool
         from .native.zmail import zmail_tool
 
         registry = cls()
@@ -40,6 +41,7 @@ class ToolRegistry:
         registry.register(grep_file_tool)
         registry.register(delegate_tool)
         registry.register(think_tool)
+        registry.register(wait_tool)
         registry.register(web_browse_tool)
         registry.register(write_file_tool)
         registry.register(zmail_tool)
