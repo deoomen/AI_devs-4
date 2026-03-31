@@ -138,9 +138,18 @@ async def run_agent(
         if agent.turn_count == 0:
             logger.info("System prompt: {}…", agent.config.system_prompt)
 
-        # Log the last message being sent (user input or tool result)
-        last = messages[-1]
-        logger.info("Last message: role={} | {}", last.role, (last.content or ""))
+        # Log all trailing tool results (parallel batch), or the last message
+        tail: list[ProviderMessage] = []
+        for m in reversed(messages[1:]):  # skip system prompt
+            if m.tool_call_id:
+                tail.insert(0, m)
+            else:
+                if not tail:
+                    tail.append(m)
+                break
+        for m in tail:
+            role = Role.TOOL if m.tool_call_id else m.role
+            logger.info("Last message: role={} | {}", role, (m.content or ""))
 
         # ── LLM call with timing ──────────────────────────────────────────────
         ctx.events.emit(Event(
