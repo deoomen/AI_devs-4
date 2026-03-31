@@ -216,6 +216,7 @@ async def run_agent(
                     call_id=tc.id,
                     tool_name=tc.name,
                     type=WaitType.TOOL_RESULT,
+                    arguments=tc.arguments or {},
                 ))
                 ctx.events.emit(Event(
                     name=EventName.TOOL_HUMAN_REQUESTED,

@@ -10,6 +10,7 @@ class WaitEntry:
     call_id: str
     tool_name: str
     type: WaitType = WaitType.TOOL_RESULT
+    arguments: dict = field(default_factory=dict)
 
 
 @dataclass

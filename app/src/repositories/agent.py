@@ -18,6 +18,7 @@ def _agent_from_row(row: AgentRow) -> Agent:
             call_id=w["call_id"],
             tool_name=w["tool_name"],
             type=WaitType(w.get("type", "tool_result")),
+            arguments=w.get("arguments", {}),
         )
         for w in json.loads(row.waiting_for_json)
     ]
@@ -42,7 +43,7 @@ def _agent_to_row_data(agent: Agent) -> dict:
         "max_turns": agent.config.max_turns,
     }
     waiting_data = [
-        {"call_id": w.call_id, "tool_name": w.tool_name, "type": w.type.value}
+        {"call_id": w.call_id, "tool_name": w.tool_name, "type": w.type.value, "arguments": w.arguments}
         for w in agent.waiting_for
     ]
     return {
