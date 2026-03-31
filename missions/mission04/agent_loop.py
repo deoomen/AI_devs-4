@@ -252,7 +252,7 @@ class AgentLoop:
                     args = json.loads(tool_call.function.arguments)
                     log.info("  -> %s(%s)", name, args)
                     result = await self._tools.execute_tool(name, args)
-                    log.info("     result: %s", result[:300])
+                    log.info("     result: %s", result)
                     messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call.id,
@@ -260,7 +260,7 @@ class AgentLoop:
                     })
             else:
                 answer = choice.message.content or ""
-                log.info("Agent finished: %s", answer[:200])
+                log.info("Agent finished: %s", answer)
                 return answer
 
         return "Max iterations reached without completing the task."

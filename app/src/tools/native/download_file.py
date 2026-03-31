@@ -35,7 +35,7 @@ async def _execute(arguments: dict) -> ToolResult:
 
     if response.status_code >= 400:
         return ToolResult(
-            output=f"HTTP {response.status_code}: {response.text[:200]}",
+            output=f"HTTP {response.status_code}: {response.text}",
             is_error=True,
         )
 

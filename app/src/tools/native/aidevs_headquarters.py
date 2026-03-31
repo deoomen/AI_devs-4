@@ -43,7 +43,7 @@ async def _execute(arguments: dict) -> ToolResult:
         result = {}
         body_str = response.text
 
-    logger.info("headquarters response: {} {}", response.status_code, body_str[:200])
+    logger.info("headquarters response: {} {}", response.status_code, body_str)
 
     # Respect retry_after from response body on 429
     if response.status_code == 429 and isinstance(result, dict):
@@ -61,7 +61,7 @@ async def _execute(arguments: dict) -> ToolResult:
                     body_str = json.dumps(result, ensure_ascii=False)
                 except (json.JSONDecodeError, ValueError):
                     body_str = response.text
-                logger.info("headquarters retry response: {} {}", response.status_code, body_str[:200])
+                logger.info("headquarters retry response: {} {}", response.status_code, body_str)
             except (httpx.TimeoutException, httpx.RequestError) as e:
                 return ToolResult(output=f"Retry failed: {e}", is_error=True)
 
