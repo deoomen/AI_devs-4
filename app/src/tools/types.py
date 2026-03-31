@@ -24,3 +24,4 @@ class Tool:
     type: ToolType
     definition: ToolDefinition
     execute: Callable[..., Awaitable[ToolResult]] | None = None
+    parallel_safe: bool = True

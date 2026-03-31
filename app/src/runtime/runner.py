@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 
@@ -69,6 +70,18 @@ def _bind_log_context(session_id: SessionId, agent_id: AgentId, agent_name: str)
         "agent_id": agent_id.short(),
         "agent_name": agent_name,
     })
+
+
+async def _execute_tool(ctx: RuntimeContext, agent_id: AgentId, tc) -> tuple:
+    """Fire a single SYNC tool; return (tc, result, tool_start, duration_ms). No DB writes."""
+    ctx.events.emit(Event(
+        name=EventName.TOOL_STARTED,
+        agent_id=agent_id,
+        data={"call_id": tc.id, "name": tc.name, "arguments": tc.arguments},
+    ))
+    tool_start = time.time()
+    result = await ctx.tools.execute(tc.name, tc.arguments)
+    return tc, result, tool_start, int((time.time() - tool_start) * 1000)
 
 
 async def _store_entry(ctx: RuntimeContext, agent_id: AgentId, turn: int, **kwargs) -> Entry:
@@ -195,8 +208,11 @@ async def run_agent(
                 arguments=tc.arguments,
             )
 
-        # Process tool calls
+        # Process tool calls — split into HUMAN / parallel-safe SYNC / sequential SYNC
         human_waits: list[WaitEntry] = []
+        parallel_tcs = []
+        sequential_tcs = []
+
         for tc in response.tool_calls:
             tool = ctx.tools.get(tc.name)
             if tool is None:
@@ -223,17 +239,19 @@ async def run_agent(
                     agent_id=agent.id,
                     data={"call_id": tc.id, "tool": tc.name, "arguments": tc.arguments},
                 ))
+            elif tool.parallel_safe:
+                parallel_tcs.append(tc)
             else:
-                # ── Tool call with timing ─────────────────────────────────────
-                ctx.events.emit(Event(
-                    name=EventName.TOOL_STARTED,
-                    agent_id=agent.id,
-                    data={"call_id": tc.id, "name": tc.name, "arguments": tc.arguments},
-                ))
-                tool_start = time.time()
-                result = await ctx.tools.execute(tc.name, tc.arguments)
-                tool_duration_ms = int((time.time() - tool_start) * 1000)
+                sequential_tcs.append(tc)
 
+        # ── Parallel-safe tools: execute concurrently, store sequentially ────
+        if parallel_tcs:
+            if len(parallel_tcs) > 1:
+                logger.info("Executing {} tools in parallel: {}", len(parallel_tcs), [tc.name for tc in parallel_tcs])
+            parallel_results = await asyncio.gather(
+                *[_execute_tool(ctx, agent.id, tc) for tc in parallel_tcs]
+            )
+            for tc, result, tool_start, tool_duration_ms in parallel_results:
                 await _store_entry(
                     ctx, agent.id, turn=agent.turn_count,
                     type=EntryType.FUNCTION_CALL_OUTPUT,
@@ -256,6 +274,32 @@ async def run_agent(
                         "duration_ms": tool_duration_ms,
                     },
                 ))
+
+        # ── Sequential tools: execute one by one ─────────────────────────────
+        for tc in sequential_tcs:
+            _, result, tool_start, tool_duration_ms = await _execute_tool(ctx, agent.id, tc)
+            await _store_entry(
+                ctx, agent.id, turn=agent.turn_count,
+                type=EntryType.FUNCTION_CALL_OUTPUT,
+                role=Role.TOOL,
+                call_id=tc.id,
+                name=tc.name,
+                output=result.output,
+                is_error=result.is_error,
+            )
+            ctx.events.emit(Event(
+                name=EventName.TOOL_COMPLETED,
+                agent_id=agent.id,
+                data={
+                    "name": tc.name,
+                    "call_id": tc.id,
+                    "arguments": tc.arguments,
+                    "output": result.output,
+                    "is_error": result.is_error,
+                    "start_time": tool_start,
+                    "duration_ms": tool_duration_ms,
+                },
+            ))
 
         if human_waits:
             agent = wait_for(agent, human_waits)

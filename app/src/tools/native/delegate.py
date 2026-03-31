@@ -207,6 +207,7 @@ async def _execute(arguments: dict) -> ToolResult:
 delegate_tool = Tool(
     name="delegate",
     type=ToolType.SYNC,
+    parallel_safe=False,
     definition=ToolDefinition(
         name="delegate",
         description=_build_description(),
