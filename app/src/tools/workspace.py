@@ -87,6 +87,14 @@ def safe_resolve(relative: str, op: FileOp = FileOp.READ) -> Path | None:
     parts = Path(relative).parts
     top_dir = parts[0] if parts else None
 
+    # plan.md: session-root file, two levels above agent workspace (ses_{id}/plan.md)
+    if relative == "plan.md" and _workspace_root.get() is not None:
+        session_root = root.parent.parent
+        plan_path = (session_root / "plan.md").resolve()
+        if str(plan_path).startswith(str(get_workspace_path().resolve())):
+            return plan_path
+        return None
+
     # shared/ resolves against global workspace root, not agent-scoped root
     if top_dir == SHARED_DIR:
         shared_root = get_shared_path().resolve()
