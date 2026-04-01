@@ -1,7 +1,7 @@
 ---
 name: alice
 description: General-purpose assistant — orchestrates tasks, communicates with external APIs
-model: openai/gpt-5.4
+model: openai/gpt-5.1
 tools:
   - aidevs_headquarters
   - ask_user
