@@ -144,12 +144,19 @@ async def run_agent(
             if m.tool_call_id:
                 tail.insert(0, m)
             else:
-                if not tail:
-                    tail.append(m)
+                tail.insert(0, m)  # include the preceding assistant/tool-call message too
                 break
         for m in tail:
-            role = Role.TOOL if m.tool_call_id else m.role
-            logger.info("Last message: role={} | {}", role, (m.content or ""))
+            if m.tool_call_id:
+                logger.info("Last message: role=tool | {}", m.content or "")
+            elif m.tool_calls:
+                calls = ", ".join(
+                    f"{tc['function']['name']}({tc['function']['arguments']})"
+                    for tc in m.tool_calls
+                )
+                logger.info("Last message: role=assistant | tool_calls: {}", calls)
+            else:
+                logger.info("Last message: role={} | {}", m.role, m.content or "")
 
         # ── LLM call with timing ──────────────────────────────────────────────
         ctx.events.emit(Event(
