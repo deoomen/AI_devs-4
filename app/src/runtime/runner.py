@@ -122,6 +122,7 @@ async def run_agent(
     max_turns = agent.config.max_turns
 
     while agent.turn_count < max_turns:
+        _bind_log_context(ctx.session_id, agent.id, agent.config.name)
         entries = await ctx.repos.entries.list_by_agent(agent.id)
         messages = _entries_to_messages(entries, agent.config.system_prompt)
 
