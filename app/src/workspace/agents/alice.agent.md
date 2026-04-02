@@ -5,11 +5,11 @@ model: openai/gpt-5.1
 tools:
   - aidevs_headquarters
   - ask_user
-  - http_request
+  - copy_file
+  - delegate
   - list_files
   - read_file
   - think
-  - wait
   - write_file
 max_turns: 80
 ---
