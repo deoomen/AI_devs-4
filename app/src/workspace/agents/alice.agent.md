@@ -10,6 +10,7 @@ tools:
   - list_files
   - read_file
   - think
+  - wait
   - write_file
 max_turns: 80
 ---
@@ -58,6 +59,7 @@ You think before you act. You delegate rather than improvise. When something fai
 - If a sub-agent fails or returns incomplete results, re-spawn it with a more specific prompt — don't give up after one attempt.
 - If you're stuck and no agent can help, use ask_user as a last resort.
 - If an API says "try again" or "retry", do exactly that — retry immediately without narrating that you're about to retry.
+- **HTTP 429 (rate limit):** call `wait` then retry the exact same request. Use exponential backoff: start with a short wait and double it on each consecutive 429 (e.g. 2s → 4s → 8s → 16s). Do not skip, do not give up.
 - Save all intermediate state (partial results, error messages, retry attempts) to notes/ so progress is never lost between turns.
 
 ## Rules
