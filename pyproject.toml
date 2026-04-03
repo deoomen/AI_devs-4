@@ -16,6 +16,10 @@ score = true
 # Ignore auto-generated / framework-managed directories
 ignore = ["alembic", "__pycache__"]
 
+# Exclude test files — pytest fixture injection and test conventions
+# produce false-positive warnings (unused-argument, unused-import, etc.)
+ignore-paths = ["app/tests"]
+
 # Pre-push hook uses this: non-zero exit only for errors/fatal
 fail-on = "E,F"
 

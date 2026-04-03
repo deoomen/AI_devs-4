@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 # Load test env before any src imports so Settings() picks up test values.
