@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.tools.native.grep_file import _execute
 
@@ -46,7 +45,7 @@ async def test_grep_invalid_regex(workspace: Path):
     assert "Invalid regex" in result.output
 
 
-async def test_grep_missing_path(workspace: Path):
+async def test_grep_missing_path():
     result = await _execute({"pattern": "hello"})
     assert result.is_error
     assert "Missing path" in result.output
@@ -59,13 +58,13 @@ async def test_grep_missing_pattern(workspace: Path):
     assert "Missing pattern" in result.output
 
 
-async def test_grep_file_not_found(workspace: Path):
+async def test_grep_file_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "notes/nonexistent.txt", "pattern": "x"})
     assert result.is_error
     assert "File not found" in result.output
 
 
-async def test_grep_denied_path(workspace: Path):
+async def test_grep_denied_path():
     result = await _execute({"path": "../secret.txt", "pattern": "x"})
     assert result.is_error
     assert "denied" in result.output

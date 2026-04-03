@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.tools.native.copy_file import _execute
 
@@ -41,31 +40,31 @@ async def test_copy_overwrites_existing_dest(workspace: Path):
     assert (workspace / "outbox" / "dst.txt").read_text() == "new content"
 
 
-async def test_copy_missing_src(workspace: Path):
+async def test_copy_missing_src():
     result = await _execute({"dest": "outbox/f.txt"})
     assert result.is_error
     assert "Missing src" in result.output
 
 
-async def test_copy_missing_dest(workspace: Path):
+async def test_copy_missing_dest():
     result = await _execute({"src": "notes/f.txt"})
     assert result.is_error
     assert "Missing dest" in result.output
 
 
-async def test_copy_source_not_found(workspace: Path):
+async def test_copy_source_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"src": "notes/missing.txt", "dest": "outbox/out.txt"})
     assert result.is_error
     assert "Source not found" in result.output
 
 
-async def test_copy_source_is_directory(workspace: Path):
+async def test_copy_source_is_directory(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"src": "notes", "dest": "outbox/out.txt"})
     assert result.is_error
     assert "not a file" in result.output
 
 
-async def test_copy_src_denied(workspace: Path):
+async def test_copy_src_denied():
     result = await _execute({"src": "../secret.txt", "dest": "outbox/out.txt"})
     assert result.is_error
     assert "denied" in result.output

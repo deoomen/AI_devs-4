@@ -1,5 +1,4 @@
 import csv
-import pytest
 from pathlib import Path
 from src.tools.native.csv_filter import _apply_filter, _transform_value, _execute
 
@@ -142,13 +141,13 @@ async def test_filter_unknown_column(workspace: Path):
     assert "Unknown column" in result.output
 
 
-async def test_filter_missing_input_path(workspace: Path):
+async def test_filter_missing_input_path():
     result = await _execute({})
     assert result.is_error
     assert "Missing input_path" in result.output
 
 
-async def test_filter_file_not_found(workspace: Path):
+async def test_filter_file_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"input_path": "notes/missing.csv"})
     assert result.is_error
     assert "File not found" in result.output

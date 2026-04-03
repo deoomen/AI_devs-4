@@ -1,9 +1,8 @@
-import pytest
 from pathlib import Path
 from src.tools.native.list_files import _execute
 
 
-async def test_list_root_shows_standard_dirs(workspace: Path):
+async def test_list_root_shows_standard_dirs(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "."})
 
     assert not result.is_error
@@ -34,14 +33,14 @@ async def test_list_empty_directory(workspace: Path):
     assert result.output == "(empty)"
 
 
-async def test_list_default_path_is_root(workspace: Path):
+async def test_list_default_path_is_root(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({})
 
     assert not result.is_error
     assert "d notes" in result.output
 
 
-async def test_list_directory_not_found(workspace: Path):
+async def test_list_directory_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "notes/nonexistent"})
 
     assert result.is_error
@@ -57,7 +56,7 @@ async def test_list_not_a_directory(workspace: Path):
     assert "Not a directory" in result.output
 
 
-async def test_list_denied_path(workspace: Path):
+async def test_list_denied_path():
     result = await _execute({"path": "../escape"})
 
     assert result.is_error

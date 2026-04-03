@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.tools.native.write_file import _execute
 
@@ -37,19 +36,19 @@ async def test_write_creates_subdirs(workspace: Path):
     assert (workspace / "notes" / "sub" / "dir" / "file.txt").read_text() == "data"
 
 
-async def test_write_missing_path(workspace: Path):
+async def test_write_missing_path():
     result = await _execute({"content": "data"})
     assert result.is_error
     assert "Missing path" in result.output
 
 
-async def test_write_denied_to_inbox(workspace: Path):
+async def test_write_denied_to_inbox(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "inbox/file.txt", "content": "data"})
     assert result.is_error
     assert "denied" in result.output
 
 
-async def test_write_denied_path_traversal(workspace: Path):
+async def test_write_denied_path_traversal():
     result = await _execute({"path": "../escape.txt", "content": "data"})
     assert result.is_error
     assert "denied" in result.output

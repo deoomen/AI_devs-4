@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.tools.native.read_file import _execute
 
@@ -49,25 +48,25 @@ async def test_read_with_offset_and_limit(workspace: Path):
     assert "d" not in result.output
 
 
-async def test_read_missing_path(workspace: Path):
+async def test_read_missing_path():
     result = await _execute({})
     assert result.is_error
     assert "Missing path" in result.output
 
 
-async def test_read_file_not_found(workspace: Path):
+async def test_read_file_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "notes/nonexistent.txt"})
     assert result.is_error
     assert "File not found" in result.output
 
 
-async def test_read_denied_path(workspace: Path):
+async def test_read_denied_path():
     result = await _execute({"path": "../escape.txt"})
     assert result.is_error
     assert "denied" in result.output
 
 
-async def test_read_directory_not_a_file(workspace: Path):
+async def test_read_directory_not_a_file(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "notes"})
     assert result.is_error
     assert "Not a file" in result.output

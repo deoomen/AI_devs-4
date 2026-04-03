@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.tools.native.count_tokens import _execute
 from src.utils.tokens import CHARS_PER_TOKEN
@@ -45,13 +44,13 @@ async def test_count_tokens_missing_both():
     assert "Provide either" in result.output
 
 
-async def test_count_tokens_file_not_found(workspace: Path):
+async def test_count_tokens_file_not_found(workspace: Path):  # pylint: disable=unused-argument
     result = await _execute({"path": "notes/missing.txt"})
     assert result.is_error
     assert "File not found" in result.output
 
 
-async def test_count_tokens_denied_path(workspace: Path):
+async def test_count_tokens_denied_path():
     result = await _execute({"path": "../secret.txt"})
     assert result.is_error
     assert "denied" in result.output
