@@ -2,6 +2,10 @@
 .idea
 .venv
 *.iml
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
 
 # AI
 .claude
