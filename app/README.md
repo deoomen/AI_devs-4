@@ -77,6 +77,22 @@ pip install -r requirements.txt
 # 4. Tables are created automatically on first startup
 ```
 
+## Testing
+
+```bash
+make test             # all tests
+make test-unit        # unit tests only (app/tests/unit/)
+make test-integration # integration tests only (app/tests/integration/)
+make lint             # pylint on app/
+```
+
+Tests live in `app/tests/` and mirror the `app/src/` structure:
+
+- **Unit** (`app/tests/unit/tools/native/`) — filesystem tools tested with a `workspace` fixture that scopes a `tmp_path` via contextvar. No network calls.
+- **Integration** (`app/tests/integration/tools/native/`) — HTTP tools tested with [`respx`](https://lundberg.github.io/respx/) mocks. LLM provider (`OpenRouterProvider`) mocked via `unittest.mock`.
+
+Test environment config: `app/.env.test`. Pytest config: `pyproject.toml`.
+
 ## Running
 
 All commands from the `app/` directory:

@@ -18,16 +18,19 @@ deactivate
 
 ## Code quality
 
-[Pylint](https://pylint.readthedocs.io/) runs automatically on every `git push` via a pre-push hook (errors & fatal only). To enable the hook:
+Use `make` for the common checks:
+
+```sh
+make lint            # pylint on app/
+make test            # all tests (unit + integration)
+make test-unit       # unit tests only
+make test-integration # integration tests only
+```
+
+[Pylint](https://pylint.readthedocs.io/) also runs automatically on every `git push` via a pre-push hook (errors & fatal only). To enable the hook:
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-To run pylint manually:
-
-```sh
-.venv/bin/pylint app/ services/ missions/ config.py main.py
-```
-
-Configuration lives in `pyproject.toml`.
+Pylint and pytest configuration lives in `pyproject.toml`.

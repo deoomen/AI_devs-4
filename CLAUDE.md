@@ -25,14 +25,28 @@ python main.py server --host 127.0.0.1 -p 3000
 python main.py run "message"                   # one-shot, default agent (alice)
 python main.py run -a bob "message"            # one-shot, specific agent
 
-# Lint (from project root)
-.venv/bin/pylint app/ services/ missions/ config.py main.py
+# Quality checks — use Makefile shortcuts (from project root)
+make lint                  # pylint on app/
+make test                  # all tests
+make test-unit             # unit tests only
+make test-integration      # integration tests only
+
+# Or directly:
+.venv/bin/pylint app/
+.venv/bin/pytest -v
 
 # Enable git pre-push hook (pylint errors+fatal)
 git config core.hooksPath .githooks
 ```
 
-No test suite exists yet. Pylint is the only automated quality check.
+## Testing
+
+pytest + pytest-asyncio + respx. Tests live in `app/tests/` mirroring the `app/src/` structure:
+
+- `unit/tools/native/` — pure logic and filesystem tools tested with a `workspace` fixture (contextvar-scoped tmp dir, no network)
+- `integration/tools/native/` — HTTP tools tested with `respx` mocks; LLM provider mocked via `unittest.mock`
+
+Test config: `pyproject.toml` (`[tool.pytest.ini_options]`). Test env: `app/.env.test`.
 
 ## Architecture
 
