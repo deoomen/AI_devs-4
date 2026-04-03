@@ -15,5 +15,7 @@ sqlalchemy[asyncio]>=2.0
 uvicorn[standard]>=0.34
 loguru>=0.7
 pylint>=4.0
+pytest>=9.0
+pytest-asyncio>=1.0
 beautifulsoup4>=4.12
 markdownify>=0.13

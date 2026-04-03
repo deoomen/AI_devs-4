@@ -6,7 +6,8 @@
       "WebFetch(domain:api.github.com)",
       "Bash(.venv/bin/pip freeze:*)",
       "Bash(.venv/bin/pylint *)",
-      "Bash(.venv/bin/pip show:*)"
+      "Bash(.venv/bin/pip show:*)",
+      "Bash(.venv/bin/pytest:*)"
     ]
   }
 }

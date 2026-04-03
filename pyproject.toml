@@ -29,6 +29,11 @@ disable = "all"
 enable = "E,F,W"
 
 # Suppress noisy warnings that are acceptable in this project
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+asyncio_mode = "auto"
+testpaths = ["app/tests"]
+
 [tool.pylint.basic]
 # Allow TODO comments without triggering fixme warnings
 notes = []
