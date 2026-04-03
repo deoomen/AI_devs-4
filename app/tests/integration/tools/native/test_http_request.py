@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock, patch
 import httpx
 import respx
 from src.tools.native.http_request import _execute, _parse_body, _retry_delay
@@ -132,10 +133,11 @@ async def test_request_error():
 async def test_retries_on_429_then_succeeds():
     route = respx.post("https://api.example.com/submit")
     route.side_effect = [
-        httpx.Response(429, json={"retry_after": 0}),
+        httpx.Response(429, json={"retry_after": 1}),
         httpx.Response(200, json={"ok": True}),
     ]
-    result = await _execute({"method": "POST", "url": "https://api.example.com/submit"})
+    with patch("src.tools.native.http_request.asyncio.sleep", new_callable=AsyncMock):
+        result = await _execute({"method": "POST", "url": "https://api.example.com/submit"})
     assert not result.is_error
     assert "HTTP 200" in result.output
     assert route.call_count == 2
@@ -148,6 +150,7 @@ async def test_retries_on_503_then_succeeds():
         httpx.Response(503, text="unavailable"),
         httpx.Response(200, text="ok"),
     ]
-    result = await _execute({"method": "GET", "url": "https://api.example.com/unstable"})
+    with patch("src.tools.native.http_request.asyncio.sleep", new_callable=AsyncMock):
+        result = await _execute({"method": "GET", "url": "https://api.example.com/unstable"})
     assert not result.is_error
     assert route.call_count == 2
