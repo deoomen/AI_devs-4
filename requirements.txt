@@ -17,5 +17,6 @@ loguru>=0.7
 pylint>=4.0
 pytest>=9.0
 pytest-asyncio>=1.0
+respx>=0.22
 beautifulsoup4>=4.12
 markdownify>=0.13
