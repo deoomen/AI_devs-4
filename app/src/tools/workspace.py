@@ -1,4 +1,5 @@
 import contextvars
+import mimetypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -67,6 +68,31 @@ def get_shared_path() -> Path:
     shared = get_workspace_path() / SHARED_DIR
     shared.mkdir(parents=True, exist_ok=True)
     return shared
+
+
+_TEXT_MIMES = frozenset({
+    "application/json",
+    "application/xml",
+    "application/javascript",
+    "application/x-yaml",
+    "application/yaml",
+})
+
+
+def is_binary_file(path: Path) -> bool:
+    """Return True if the file is likely binary (not safe to read as UTF-8 text).
+
+    Uses MIME type from file extension first; falls back to null-byte sniffing
+    for unknown types.
+    """
+    mime, _ = mimetypes.guess_type(str(path))
+    if mime is not None:
+        return not (mime.startswith("text/") or mime in _TEXT_MIMES)
+    # Unknown extension — sniff first 512 bytes for null bytes (git-style heuristic)
+    try:
+        return b"\x00" in path.read_bytes()[:512]
+    except OSError:
+        return False
 
 
 def safe_resolve(relative: str, op: FileOp = FileOp.READ) -> Path | None:

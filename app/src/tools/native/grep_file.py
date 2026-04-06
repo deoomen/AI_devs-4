@@ -4,7 +4,7 @@ from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import FileOp, safe_resolve
+from ..workspace import FileOp, is_binary_file, safe_resolve
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -22,6 +22,10 @@ async def _execute(arguments: dict) -> ToolResult:
     if not safe.exists() or not safe.is_file():
         return ToolResult(output=f"File not found: {path}", is_error=True)
 
+    if is_binary_file(safe):
+        logger.warning("grep_file: binary file skipped: {}", path)
+        return ToolResult(output=f"Skipped binary file: {path}", is_error=True)
+
     try:
         regex = re.compile(pattern, re.IGNORECASE)
     except re.error as e:
@@ -30,8 +34,8 @@ async def _execute(arguments: dict) -> ToolResult:
     try:
         lines = safe.read_text(encoding="utf-8").splitlines()
     except UnicodeDecodeError:
-        logger.warning("grep_file skipping binary file: {}", path)
-        return ToolResult(output=f"Skipped binary file: {path}")
+        logger.warning("grep_file: UTF-8 decode failed: {}", path)
+        return ToolResult(output=f"Skipped binary file: {path}", is_error=True)
 
     matches = [f"{i + 1}: {line}" for i, line in enumerate(lines) if regex.search(line)]
 

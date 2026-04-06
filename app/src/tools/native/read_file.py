@@ -2,7 +2,7 @@ from loguru import logger
 
 from src.domain.types import ToolType
 from ..types import Tool, ToolDefinition, ToolResult
-from ..workspace import FileOp, safe_resolve
+from ..workspace import FileOp, is_binary_file, safe_resolve
 
 
 async def _execute(arguments: dict) -> ToolResult:
@@ -18,7 +18,15 @@ async def _execute(arguments: dict) -> ToolResult:
     if not safe.is_file():
         return ToolResult(output=f"Not a file: {path}", is_error=True)
 
-    lines = safe.read_text(encoding="utf-8").splitlines(keepends=True)
+    if is_binary_file(safe):
+        logger.warning("read_file: binary file rejected: {}", path)
+        return ToolResult(output=f"Binary file (not readable as text): {path}. Use analyze_image for images.", is_error=True)
+
+    try:
+        lines = safe.read_text(encoding="utf-8").splitlines(keepends=True)
+    except UnicodeDecodeError:
+        logger.warning("read_file: UTF-8 decode failed: {}", path)
+        return ToolResult(output=f"Binary file (not readable as text): {path}. Use analyze_image for images.", is_error=True)
     total_lines = len(lines)
 
     offset = arguments.get("offset", 0)

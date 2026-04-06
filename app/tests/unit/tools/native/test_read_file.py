@@ -70,3 +70,22 @@ async def test_read_directory_not_a_file(workspace: Path):  # pylint: disable=un
     result = await _execute({"path": "notes"})
     assert result.is_error
     assert "Not a file" in result.output
+
+
+async def test_read_binary_file_known_extension(workspace: Path):
+    (workspace / "notes" / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
+
+    result = await _execute({"path": "notes/image.png"})
+
+    assert result.is_error
+    assert "Binary file" in result.output
+    assert "analyze_image" in result.output
+
+
+async def test_read_binary_file_null_bytes(workspace: Path):
+    (workspace / "notes" / "data.bin").write_bytes(b"some\x00binary\x00data")
+
+    result = await _execute({"path": "notes/data.bin"})
+
+    assert result.is_error
+    assert "Binary file" in result.output

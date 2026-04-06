@@ -68,3 +68,21 @@ async def test_grep_denied_path():
     result = await _execute({"path": "../secret.txt", "pattern": "x"})
     assert result.is_error
     assert "denied" in result.output
+
+
+async def test_grep_binary_file_known_extension(workspace: Path):
+    (workspace / "notes" / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
+
+    result = await _execute({"path": "notes/image.png", "pattern": "anything"})
+
+    assert result.is_error
+    assert "Skipped binary file" in result.output
+
+
+async def test_grep_binary_file_null_bytes(workspace: Path):
+    (workspace / "notes" / "data.bin").write_bytes(b"some\x00binary\x00data")
+
+    result = await _execute({"path": "notes/data.bin", "pattern": "anything"})
+
+    assert result.is_error
+    assert "Skipped binary file" in result.output
