@@ -27,7 +27,12 @@ async def _execute(arguments: dict) -> ToolResult:
     except re.error as e:
         return ToolResult(output=f"Invalid regex: {e}", is_error=True)
 
-    lines = safe.read_text(encoding="utf-8").splitlines()
+    try:
+        lines = safe.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError:
+        logger.warning("grep_file skipping binary file: {}", path)
+        return ToolResult(output=f"Skipped binary file: {path}")
+
     matches = [f"{i + 1}: {line}" for i, line in enumerate(lines) if regex.search(line)]
 
     logger.debug("grep_file {} pattern='{}': {} matches out of {} lines", path, pattern, len(matches), len(lines))
