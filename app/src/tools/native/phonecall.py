@@ -88,6 +88,10 @@ async def _execute(arguments: dict) -> ToolResult:
     if action == "speak" and not session_dir:
         return ToolResult(output="session_dir is required when action is 'speak' (use the value returned by action='start')", is_error=True)
 
+    # Guard against agent passing a bare name without the required notes/ prefix
+    if action == "speak" and not session_dir.startswith(("notes/", "outbox/", "shared/")):
+        session_dir = f"notes/{session_dir}"
+
     url = f"{settings.aidevs4_headquarters_system_url}/verify"
 
     if action == "start":
