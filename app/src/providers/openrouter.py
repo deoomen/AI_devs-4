@@ -136,7 +136,7 @@ class OpenRouterProvider(Provider):
                 messages=[{"role": "user", "content": text}],
                 stream=True,
                 extra_body={
-                    "modalities": ["audio"],
+                    "modalities": ["text", "audio"],
                     "audio": {"voice": voice, "format": output_format},
                 },
             )
