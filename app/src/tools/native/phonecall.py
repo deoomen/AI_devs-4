@@ -7,6 +7,7 @@ from loguru import logger
 
 from src.config import settings
 from src.domain.types import ToolType
+from .text_to_speech import _execute as _tts_execute
 from .transcribe_audio import _execute as _transcribe_execute
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
@@ -16,16 +17,27 @@ DEFAULT_TIMEOUT = 30.0
 
 async def _execute(arguments: dict) -> ToolResult:
     action = arguments.get("action", "")
-    audio_path = arguments.get("audio_path", "")
+    text = arguments.get("text", "")
+    session_dir = arguments.get("session_dir", "").rstrip("/")
 
     if action not in ("start", "speak"):
         return ToolResult(output="action must be 'start' or 'speak'", is_error=True)
-    if action == "speak" and not audio_path:
-        return ToolResult(output="audio_path is required when action is 'speak'", is_error=True)
+    if action == "speak" and not text:
+        return ToolResult(output="text is required when action is 'speak'", is_error=True)
+    if action == "speak" and not session_dir:
+        return ToolResult(output="session_dir is required when action is 'speak' (use the value returned by action='start')", is_error=True)
 
     url = f"{settings.aidevs4_headquarters_system_url}/verify"
 
     if action == "start":
+        ts = datetime.now().strftime("%H%M%S")
+        session_dir = f"notes/session_{ts}"
+        safe_dir = safe_resolve(session_dir, FileOp.WRITE)
+        if safe_dir is None:
+            return ToolResult(output=f"Write denied: {session_dir}", is_error=True)
+        safe_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("phonecall: session dir → {}", safe_dir)
+
         payload = {
             "apikey": settings.aidevs4_headquarters_api_key,
             "task": "phonecall",
@@ -33,11 +45,16 @@ async def _execute(arguments: dict) -> ToolResult:
         }
         logger.info("phonecall: starting session")
     else:
-        safe_in = safe_resolve(audio_path, FileOp.READ)
-        if safe_in is None:
-            return ToolResult(output=f"Read denied: {audio_path}", is_error=True)
-        if not safe_in.exists() or not safe_in.is_file():
-            return ToolResult(output=f"File not found: {audio_path}", is_error=True)
+        # Convert text to audio internally
+        ts = datetime.now().strftime("%H%M%S_%f")[:11]
+        turn_path = f"{session_dir}/turn_{ts}.wav"
+        tts_result = await _tts_execute({"text": text, "output_path": turn_path})
+        if tts_result.is_error:
+            return ToolResult(output=f"TTS failed: {tts_result.output}", is_error=True)
+
+        safe_in = safe_resolve(turn_path, FileOp.READ)
+        if safe_in is None or not safe_in.exists():
+            return ToolResult(output=f"TTS output not found: {turn_path}", is_error=True)
 
         audio_b64 = base64.b64encode(safe_in.read_bytes()).decode()
         payload = {
@@ -45,7 +62,7 @@ async def _execute(arguments: dict) -> ToolResult:
             "task": "phonecall",
             "answer": {"audio": audio_b64},
         }
-        logger.info("phonecall: sending audio ({} bytes)", safe_in.stat().st_size)
+        logger.info("phonecall: sending audio ({} bytes) for text: {!r}", safe_in.stat().st_size, text[:60])
 
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
@@ -69,6 +86,10 @@ async def _execute(arguments: dict) -> ToolResult:
             is_error=True,
         )
 
+    if action == "start":
+        text_response = json.dumps(result, ensure_ascii=False)
+        return ToolResult(output=f"Session started. Use session_dir='{session_dir}' for all turns.\n{text_response}")
+
     # Operator replied with audio — decode, save for review, transcribe, return text only
     if isinstance(result, dict) and "audio" in result:
         try:
@@ -77,21 +98,23 @@ async def _execute(arguments: dict) -> ToolResult:
             return ToolResult(output=f"Failed to decode response audio: {e}", is_error=True)
 
         ts = datetime.now().strftime("%H%M%S_%f")[:11]
-        parent = "/".join(audio_path.split("/")[:-1]) if "/" in audio_path else "notes"
-        response_path = f"{parent}/response_{ts}.wav"
+        response_path = f"{session_dir}/response_{ts}.wav"
         safe_out = safe_resolve(response_path, FileOp.WRITE)
         if safe_out is None:
             return ToolResult(output=f"Write denied: {response_path}", is_error=True)
 
         safe_out.parent.mkdir(parents=True, exist_ok=True)
         safe_out.write_bytes(audio_bytes)
-        logger.info("phonecall: saved response audio → {}", response_path)
+        logger.info("phonecall: saved response audio → {} ({})", response_path, safe_out)
 
         transcript_result = await _transcribe_execute({"path": response_path})
         if transcript_result.is_error:
-            return ToolResult(output=f"Audio saved to {response_path} but transcription failed: {transcript_result.output}", is_error=True)
-        transcription = transcript_result.output
+            return ToolResult(
+                output=f"Audio saved to {response_path} but transcription failed: {transcript_result.output}",
+                is_error=True,
+            )
 
+        transcription = transcript_result.output
         logger.info("phonecall: transcription done ({} chars)", len(transcription))
 
         other = {k: v for k, v in result.items() if k != "audio"}
@@ -109,10 +132,11 @@ phonecall_tool = Tool(
         name="phonecall",
         description=(
             "Conduct a phone call with the HQ operator for the 'phonecall' mission. "
-            "First call with action='start' to open the session. "
-            "Then call with action='speak' and audio_path pointing to a WAV file generated with text_to_speech. "
-            "Always returns text: either the operator's spoken words (transcribed automatically) "
-            "or a plain text/flag response. Audio files are saved to the workspace for review."
+            "Call with action='start' to open the session — returns a session_dir to use for all subsequent turns. "
+            "Then call with action='speak', passing the text to say (in Polish) and the session_dir from start. "
+            "Audio is generated and sent automatically. "
+            "Always returns text: the operator's words (transcribed) or a plain text/flag response. "
+            "All audio files are saved in session_dir for review."
         ),
         parameters={
             "type": "object",
@@ -120,11 +144,15 @@ phonecall_tool = Tool(
                 "action": {
                     "type": "string",
                     "enum": ["start", "speak"],
-                    "description": "'start' opens the session. 'speak' sends your audio turn.",
+                    "description": "'start' opens the session. 'speak' sends a spoken turn.",
                 },
-                "audio_path": {
+                "text": {
                     "type": "string",
-                    "description": "Workspace-relative path to the WAV file to send (required for action='speak').",
+                    "description": "The Polish text to speak to the operator (required for action='speak').",
+                },
+                "session_dir": {
+                    "type": "string",
+                    "description": "Session directory returned by action='start'. Required for action='speak'.",
                 },
             },
             "required": ["action"],
