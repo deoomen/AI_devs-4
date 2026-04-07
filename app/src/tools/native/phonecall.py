@@ -76,7 +76,8 @@ async def _execute(arguments: dict) -> ToolResult:
             return ToolResult(output=f"Failed to decode response audio: {e}", is_error=True)
 
         ts = datetime.now().strftime("%H%M%S_%f")[:11]
-        response_path = f"notes/phonecall_response_{ts}.mp3"
+        parent = "/".join(audio_path.split("/")[:-1]) if "/" in audio_path else "notes"
+        response_path = f"{parent}/response_{ts}.wav"
         safe_out = safe_resolve(response_path, FileOp.WRITE)
         if safe_out is None:
             return ToolResult(output=f"Write denied: {response_path}", is_error=True)
@@ -101,10 +102,11 @@ phonecall_tool = Tool(
         description=(
             "Conduct a phone call with the HQ operator for the 'phonecall' mission. "
             "First call with action='start' to open the session. "
-            "Then call with action='speak' and an audio_path pointing to an MP3 file in the workspace "
-            "(generate it with text_to_speech first). "
+            "Then call with action='speak' and an audio_path pointing to a WAV file you generated with text_to_speech. "
             "Returns either plain text/flag from the operator, "
-            "or '[AUDIO] notes/phonecall_response_*.mp3' — in that case transcribe the file with transcribe_audio."
+            "or '[AUDIO] <path>' when the operator replies with audio. "
+            "When you receive [AUDIO], you MUST call transcribe_audio on that path to get the operator's words — "
+            "do not attempt to read the audio file directly."
         ),
         parameters={
             "type": "object",
@@ -116,7 +118,7 @@ phonecall_tool = Tool(
                 },
                 "audio_path": {
                     "type": "string",
-                    "description": "Workspace-relative path to the MP3 to send (required for action='speak').",
+                    "description": "Workspace-relative path to the WAV file to send (required for action='speak').",
                 },
             },
             "required": ["action"],
