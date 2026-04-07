@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 
 from loguru import logger
@@ -108,6 +109,57 @@ class OpenRouterProvider(Provider):
             usage=usage,
             model=model,
         )
+
+    async def tts(
+        self,
+        text: str,
+        model: str | None = None,
+        voice: str = "alloy",
+        output_format: str = "mp3",
+    ) -> bytes:
+        """Generate speech audio from text via OpenRouter TTS models.
+
+        Streams the response, collects base64 audio chunks, and returns raw audio bytes.
+        Supports any OpenRouter model that accepts audio modality output
+        (e.g. openai/gpt-4o-mini-audio-preview).
+        """
+        if not model:
+            model = settings.openrouter_default_tts_model
+
+        logger.info("TTS request: model={} voice={} format={} text_len={}", model, voice, output_format, len(text))
+
+        audio_chunks: list[str] = []
+
+        try:
+            stream = await self._client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": text}],
+                stream=True,
+                extra_body={
+                    "modalities": ["audio"],
+                    "audio": {"voice": voice, "format": output_format},
+                },
+            )
+            async for chunk in stream:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                # delta.audio may be a typed object or a plain dict depending on SDK version
+                raw_audio = getattr(delta, "audio", None)
+                if raw_audio is None:
+                    continue
+                data = raw_audio.get("data") if isinstance(raw_audio, dict) else getattr(raw_audio, "data", None)
+                if data:
+                    audio_chunks.append(data)
+        except APIStatusError as e:
+            raise RuntimeError(f"TTS API error {e.status_code}: {e.message}") from e
+
+        if not audio_chunks:
+            raise RuntimeError("TTS returned no audio data — model may not support audio output modality")
+
+        audio_bytes = base64.b64decode("".join(audio_chunks))
+        logger.info("TTS done: {} bytes of {} audio", len(audio_bytes), output_format)
+        return audio_bytes
 
     async def _call_with_retry(self, kwargs: dict):
         last_error: Exception | None = None

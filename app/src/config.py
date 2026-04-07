@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     openrouter_default_chat_model: str = "openai/gpt-4.1-mini"
     openrouter_default_vision_model: str = "google/gemini-3-flash-preview"
     openrouter_default_audio_model: str = "google/gemini-3-flash-preview"
+    openrouter_default_tts_model: str = "google/lyria-3-pro-preview"
     provider_max_retries: int = 3
 
     # AIDevs Headquarters
