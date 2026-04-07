@@ -7,6 +7,7 @@ from loguru import logger
 
 from src.config import settings
 from src.domain.types import ToolType
+from .transcribe_audio import _execute as _transcribe_execute
 from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
 
@@ -68,7 +69,7 @@ async def _execute(arguments: dict) -> ToolResult:
             is_error=True,
         )
 
-    # Operator replied with audio — decode and save, never surface base64 to agent
+    # Operator replied with audio — decode, save for review, transcribe, return text only
     if isinstance(result, dict) and "audio" in result:
         try:
             audio_bytes = base64.b64decode(result["audio"])
@@ -86,9 +87,16 @@ async def _execute(arguments: dict) -> ToolResult:
         safe_out.write_bytes(audio_bytes)
         logger.info("phonecall: saved response audio → {}", response_path)
 
+        transcript_result = await _transcribe_execute({"path": response_path})
+        if transcript_result.is_error:
+            return ToolResult(output=f"Audio saved to {response_path} but transcription failed: {transcript_result.output}", is_error=True)
+        transcription = transcript_result.output
+
+        logger.info("phonecall: transcription done ({} chars)", len(transcription))
+
         other = {k: v for k, v in result.items() if k != "audio"}
-        suffix = f" | {json.dumps(other, ensure_ascii=False)}" if other else ""
-        return ToolResult(output=f"[AUDIO] {response_path}{suffix}")
+        suffix = f"\n{json.dumps(other, ensure_ascii=False)}" if other else ""
+        return ToolResult(output=f"Operator: {transcription}{suffix}")
 
     # Text or flag response — return as-is
     return ToolResult(output=json.dumps(result, ensure_ascii=False))
@@ -102,11 +110,9 @@ phonecall_tool = Tool(
         description=(
             "Conduct a phone call with the HQ operator for the 'phonecall' mission. "
             "First call with action='start' to open the session. "
-            "Then call with action='speak' and an audio_path pointing to a WAV file you generated with text_to_speech. "
-            "Returns either plain text/flag from the operator, "
-            "or '[AUDIO] <path>' when the operator replies with audio. "
-            "When you receive [AUDIO], you MUST call transcribe_audio on that path to get the operator's words — "
-            "do not attempt to read the audio file directly."
+            "Then call with action='speak' and audio_path pointing to a WAV file generated with text_to_speech. "
+            "Always returns text: either the operator's spoken words (transcribed automatically) "
+            "or a plain text/flag response. Audio files are saved to the workspace for review."
         ),
         parameters={
             "type": "object",
