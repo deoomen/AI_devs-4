@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 from datetime import datetime
 
@@ -13,12 +14,72 @@ from ..types import Tool, ToolDefinition, ToolResult
 from ..workspace import FileOp, safe_resolve
 
 DEFAULT_TIMEOUT = 30.0
+TTS_CACHE_DIR = "shared/phonecall/tts_cache"
+RESPONSE_CACHE_DIR = "shared/phonecall/response_cache"
+
+
+async def _tts_cached(text: str, turn_path: str, voice: str, model: str | None) -> ToolResult:
+    """Generate TTS audio, using shared cache to avoid redundant API calls."""
+    key = hashlib.md5(f"{text}|{voice}|{model or ''}".encode()).hexdigest()
+    cache_path = f"{TTS_CACHE_DIR}/{key}.wav"
+
+    safe_cache = safe_resolve(cache_path, FileOp.READ)
+    if safe_cache and safe_cache.exists():
+        safe_out = safe_resolve(turn_path, FileOp.WRITE)
+        if safe_out is None:
+            return ToolResult(output=f"Write denied: {turn_path}", is_error=True)
+        safe_out.parent.mkdir(parents=True, exist_ok=True)
+        safe_out.write_bytes(safe_cache.read_bytes())
+        logger.info("phonecall TTS cache hit: key={} → {}", key[:8], turn_path)
+        return ToolResult(output=f"Audio saved to {turn_path} ({safe_cache.stat().st_size} bytes, cached)")
+
+    result = await _tts_execute({"text": text, "output_path": turn_path, "voice": voice, **({"model": model} if model else {})})
+    if result.is_error:
+        return result
+
+    safe_turn = safe_resolve(turn_path, FileOp.READ)
+    if safe_turn and safe_turn.exists():
+        safe_cache_w = safe_resolve(cache_path, FileOp.WRITE)
+        if safe_cache_w:
+            safe_cache_w.parent.mkdir(parents=True, exist_ok=True)
+            safe_cache_w.write_bytes(safe_turn.read_bytes())
+            logger.info("phonecall TTS cached: key={}", key[:8])
+
+    return result
+
+
+async def _transcribe_cached(audio_bytes: bytes, response_path: str) -> str:
+    """Transcribe audio, using shared cache keyed by audio content hash."""
+    key = hashlib.md5(audio_bytes).hexdigest()
+    cache_path = f"{RESPONSE_CACHE_DIR}/{key}.txt"
+
+    safe_cache = safe_resolve(cache_path, FileOp.READ)
+    if safe_cache and safe_cache.exists():
+        transcription = safe_cache.read_text(encoding="utf-8")
+        logger.info("phonecall response cache hit: key={} ({} chars)", key[:8], len(transcription))
+        return transcription
+
+    transcript_result = await _transcribe_execute({"path": response_path})
+    if transcript_result.is_error:
+        raise RuntimeError(transcript_result.output)
+
+    transcription = transcript_result.output
+
+    safe_cache_w = safe_resolve(cache_path, FileOp.WRITE)
+    if safe_cache_w:
+        safe_cache_w.parent.mkdir(parents=True, exist_ok=True)
+        safe_cache_w.write_text(transcription, encoding="utf-8")
+        logger.info("phonecall response cached: key={}", key[:8])
+
+    return transcription
 
 
 async def _execute(arguments: dict) -> ToolResult:
     action = arguments.get("action", "")
     text = arguments.get("text", "")
     session_dir = arguments.get("session_dir", "").rstrip("/")
+    voice = arguments.get("voice", "alloy")
+    model = arguments.get("model") or None
 
     if action not in ("start", "speak"):
         return ToolResult(output="action must be 'start' or 'speak'", is_error=True)
@@ -45,10 +106,9 @@ async def _execute(arguments: dict) -> ToolResult:
         }
         logger.info("phonecall: starting session")
     else:
-        # Convert text to audio internally
         ts = datetime.now().strftime("%H%M%S_%f")[:11]
         turn_path = f"{session_dir}/turn_{ts}.wav"
-        tts_result = await _tts_execute({"text": text, "output_path": turn_path})
+        tts_result = await _tts_cached(text, turn_path, voice, model)
         if tts_result.is_error:
             return ToolResult(output=f"TTS failed: {tts_result.output}", is_error=True)
 
@@ -90,7 +150,7 @@ async def _execute(arguments: dict) -> ToolResult:
         text_response = json.dumps(result, ensure_ascii=False)
         return ToolResult(output=f"Session started. Use session_dir='{session_dir}' for all turns.\n{text_response}")
 
-    # Operator replied with audio — decode, save for review, transcribe, return text only
+    # Operator replied with audio — decode, save for review, transcribe (cached), return text only
     if isinstance(result, dict) and "audio" in result:
         try:
             audio_bytes = base64.b64decode(result["audio"])
@@ -107,15 +167,15 @@ async def _execute(arguments: dict) -> ToolResult:
         safe_out.write_bytes(audio_bytes)
         logger.info("phonecall: saved response audio → {} ({})", response_path, safe_out)
 
-        transcript_result = await _transcribe_execute({"path": response_path})
-        if transcript_result.is_error:
+        try:
+            transcription = await _transcribe_cached(audio_bytes, response_path)
+        except RuntimeError as e:
             return ToolResult(
-                output=f"Audio saved to {response_path} but transcription failed: {transcript_result.output}",
+                output=f"Audio saved to {response_path} but transcription failed: {e}",
                 is_error=True,
             )
 
-        transcription = transcript_result.output
-        logger.info("phonecall: transcription done ({} chars)", len(transcription))
+        logger.info("phonecall: operator said: {!r}", transcription[:80])
 
         other = {k: v for k, v in result.items() if k != "audio"}
         suffix = f"\n{json.dumps(other, ensure_ascii=False)}" if other else ""
@@ -133,9 +193,9 @@ phonecall_tool = Tool(
         description=(
             "Conduct a phone call with the HQ operator for the 'phonecall' mission. "
             "Call with action='start' to open the session — returns a session_dir to use for all subsequent turns. "
-            "Then call with action='speak', passing the text to say (in Polish) and the session_dir from start. "
-            "Audio is generated and sent automatically. "
-            "Always returns text: the operator's words (transcribed) or a plain text/flag response. "
+            "Then call with action='speak', passing the Polish text to say and the session_dir from start. "
+            "Audio generation and transcription are handled automatically with caching. "
+            "Always returns text: the operator's words or a plain text/flag response. "
             "All audio files are saved in session_dir for review."
         ),
         parameters={
@@ -153,6 +213,15 @@ phonecall_tool = Tool(
                 "session_dir": {
                     "type": "string",
                     "description": "Session directory returned by action='start'. Required for action='speak'.",
+                },
+                "voice": {
+                    "type": "string",
+                    "description": "TTS voice. Options: alloy, echo, fable, onyx, nova, shimmer. Default: alloy.",
+                    "default": "alloy",
+                },
+                "model": {
+                    "type": "string",
+                    "description": "TTS model override. Defaults to configured openrouter_default_tts_model.",
                 },
             },
             "required": ["action"],
