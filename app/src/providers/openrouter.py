@@ -1,6 +1,8 @@
 import asyncio
 import base64
+import io
 import json
+import wave
 
 from loguru import logger
 from openai import APIStatusError, AsyncOpenAI, RateLimitError
@@ -115,20 +117,20 @@ class OpenRouterProvider(Provider):
         text: str,
         model: str | None = None,
         voice: str = "alloy",
-        output_format: str = "mp3",
     ) -> bytes:
         """Generate speech audio from text via OpenRouter TTS models.
 
-        Streams the response, collects base64 audio chunks, and returns raw audio bytes.
+        Streams the response as PCM16 (the only format supported in streaming mode),
+        wraps it in a WAV container, and returns the WAV bytes.
         Supports any OpenRouter model that accepts audio modality output
         (e.g. openai/gpt-4o-mini-audio-preview).
         """
         if not model:
             model = settings.openrouter_default_tts_model
 
-        logger.info("TTS request: model={} voice={} format={} text_len={}", model, voice, output_format, len(text))
+        logger.info("TTS request: model={} voice={} text_len={}", model, voice, len(text))
 
-        audio_chunks: list[str] = []
+        pcm_chunks: list[bytes] = []
 
         try:
             stream = await self._client.chat.completions.create(
@@ -137,29 +139,29 @@ class OpenRouterProvider(Provider):
                 stream=True,
                 extra_body={
                     "modalities": ["text", "audio"],
-                    "audio": {"voice": voice, "format": output_format},
+                    "audio": {"voice": voice, "format": "pcm16"},
                 },
             )
             async for chunk in stream:
                 if not chunk.choices:
                     continue
                 delta = chunk.choices[0].delta
-                # delta.audio may be a typed object or a plain dict depending on SDK version
                 raw_audio = getattr(delta, "audio", None)
                 if raw_audio is None:
                     continue
                 data = raw_audio.get("data") if isinstance(raw_audio, dict) else getattr(raw_audio, "data", None)
                 if data:
-                    audio_chunks.append(data)
+                    pcm_chunks.append(base64.b64decode(data))
         except APIStatusError as e:
             raise RuntimeError(f"TTS API error {e.status_code}: {e.message}") from e
 
-        if not audio_chunks:
+        if not pcm_chunks:
             raise RuntimeError("TTS returned no audio data — model may not support audio output modality")
 
-        audio_bytes = base64.b64decode("".join(audio_chunks))
-        logger.info("TTS done: {} bytes of {} audio", len(audio_bytes), output_format)
-        return audio_bytes
+        pcm_data = b"".join(pcm_chunks)
+        wav_bytes = _pcm16_to_wav(pcm_data)
+        logger.info("TTS done: {} PCM bytes → {} WAV bytes", len(pcm_data), len(wav_bytes))
+        return wav_bytes
 
     async def _call_with_retry(self, kwargs: dict):
         last_error: Exception | None = None
@@ -252,6 +254,17 @@ async def _wait_if_rate_limited(headers, model: str) -> None:
                 model, wait_seconds,
             )
             await asyncio.sleep(wait_seconds)
+
+
+def _pcm16_to_wav(pcm_data: bytes, sample_rate: int = 24000, channels: int = 1) -> bytes:
+    """Wrap raw PCM16 bytes in a WAV container. OpenAI TTS streams at 24 kHz mono."""
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:  # pylint: disable=no-member
+        wf.setnchannels(channels)     # pylint: disable=no-member
+        wf.setsampwidth(2)            # pylint: disable=no-member
+        wf.setframerate(sample_rate)  # pylint: disable=no-member
+        wf.writeframes(pcm_data)      # pylint: disable=no-member
+    return buf.getvalue()
 
 
 def _parse_retry_after(error: RateLimitError) -> float:

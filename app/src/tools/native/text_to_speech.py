@@ -17,6 +17,12 @@ async def _execute(arguments: dict) -> ToolResult:
     if not output_path:
         return ToolResult(output="Missing output_path", is_error=True)
 
+    # Output is always WAV — normalise extension regardless of what agent passed
+    if "." in output_path:
+        output_path = output_path.rsplit(".", 1)[0] + ".wav"
+    else:
+        output_path = output_path + ".wav"
+
     safe_out = safe_resolve(output_path, FileOp.WRITE)
     if safe_out is None:
         return ToolResult(output=f"Write denied: {output_path} (use notes/ or outbox/)", is_error=True)
@@ -40,9 +46,10 @@ text_to_speech_tool = Tool(
     definition=ToolDefinition(
         name="text_to_speech",
         description=(
-            "Convert text to speech and save the audio to a workspace file. "
-            "Returns the output path on success. "
-            "Use notes/ for intermediate audio files (e.g. notes/turn1.mp3)."
+            "Convert text to speech and save the audio as a WAV file in the workspace. "
+            "The output is always saved as .wav regardless of the extension you specify. "
+            "Returns the actual saved path on success. "
+            "Use notes/ for intermediate audio files (e.g. notes/turn1.wav)."
         ),
         parameters={
             "type": "object",
@@ -53,7 +60,7 @@ text_to_speech_tool = Tool(
                 },
                 "output_path": {
                     "type": "string",
-                    "description": "Workspace-relative path to save the audio file (e.g. notes/turn1.mp3).",
+                    "description": "Workspace-relative path to save the audio (e.g. notes/turn1.wav). Always saved as WAV.",
                 },
                 "voice": {
                     "type": "string",
