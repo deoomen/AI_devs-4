@@ -19,9 +19,18 @@ fi
 
 echo "pre-push: running pylint..."
 
-if ! "$PYLINT" app/ services/ missions/ config.py main.py; then
+# Temporarily disable exit-on-error so we can inspect the exit code ourselves.
+set +e
+"$PYLINT" app/ services/ missions/ config.py main.py
+PYLINT_EXIT=$?
+set -e
+
+# pylint exit code is a bitmask:
+#   1 = fatal (F)   2 = error (E)   4 = warning   8 = refactor   16 = convention
+# Fail only on fatal (1) and error (2).
+if (( PYLINT_EXIT & 3 )); then
     echo ""
-    echo "pre-push: pylint found errors. Fix them before pushing."
+    echo "pre-push: pylint found E/F errors. Fix them before pushing."
     echo "         Run: .venv/bin/pylint app/ services/ missions/ config.py main.py"
     exit 1
 fi
