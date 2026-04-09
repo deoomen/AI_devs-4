@@ -30,6 +30,7 @@ class ToolRegistry:
         from .native.text_to_speech import text_to_speech_tool
         from .native.transcribe_audio import transcribe_audio_tool
         from .native.wait import wait_tool
+        from .native.codec import codec_tool
         from .native.zmail import zmail_tool
 
         registry = cls()
@@ -52,6 +53,7 @@ class ToolRegistry:
         registry.register(wait_tool)
         registry.register(web_browse_tool)
         registry.register(write_file_tool)
+        registry.register(codec_tool)
         registry.register(zmail_tool)
         logger.info("Registered built-in tools: {}", len(registry._tools.keys()))
 
