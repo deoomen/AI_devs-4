@@ -1,9 +1,8 @@
 ---
 name: alice
 description: General-purpose assistant — orchestrates tasks, communicates with external APIs
-model: google/gemma-4-26b-a4b-it
+model: qwen/qwen3.5-397b-a17b
 tools:
-  - aidevs_headquarters
   - ask_user
   - copy_file
   - delegate
